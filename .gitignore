@@ -1,0 +1,64 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+config.json
+auth.json
+
+# SQLite database files
+*.db
+*.db-journal
+carrot_gamba.db
+database.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build / Dist
+dist/
+build/
+out/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Bot-specific
+sessions/
+temp/
+upload/
+.cache/
+.wwebjs_auth/
+
+# Miscellaneous
+.DS_Store
+Thumbs.db
+desktop.ini
