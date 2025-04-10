@@ -30,9 +30,6 @@ const client = new Client({
     ],
 });
 
-// Add session recovery logic
-let lastKnownStates = new Map();
-
 // start the bot
 // initialize the database and log in to discord
 async function startBot() {
@@ -54,14 +51,16 @@ async function startBot() {
     }
 }
 
+// Handle clean shutdown
 async function handleShutdown() {
     console.log('\nGracefully shutting down...');
     
     try {
         // Clear any intervals first
         clearInterval(voiceRewardInterval);
-        lastKnownStates.clear();
-
+        clearInterval(trackingCleanupInterval);
+        clearInterval(statsLoggingInterval);
+        
         // Set bot status to offline and wait for it
         if (client.user) {
             client.user.setPresence({
@@ -204,24 +203,16 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     // User switched channels
     if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
         activityTracker.endVoiceSession(userId, guildId);
-        const channelUserCount = newState.channel.members.size;
-        activityTracker.startVoiceSession(userId, guildId, channelUserCount);
+        activityTracker.startVoiceSession(userId, guildId, newState.channel.members.size);
     }
     // User joined a voice channel
     else if (!oldState.channelId && newState.channelId) {
-        const channelUserCount = newState.channel.members.size;
-        activityTracker.startVoiceSession(userId, guildId, channelUserCount);
+        activityTracker.startVoiceSession(userId, guildId, newState.channel.members.size);
     }
     // User left a voice channel
     else if (oldState.channelId && !newState.channelId) {
         activityTracker.endVoiceSession(userId, guildId);
     }
-    
-    // Update last known state
-    lastKnownStates.set(`${userId}-${guildId}`, {
-        channelId: newState.channelId,
-        timestamp: Date.now()
-    });
 });
 
 // Modified voice reward interval
@@ -234,36 +225,23 @@ const voiceRewardInterval = setInterval(async () => {
                     
                     for (const [memberId, member] of channel.members) {
                         try {
-                            // Proper presence check
+                            // Only two checks: user must be online and not muted/deafened
                             if (!member.presence?.status || member.presence.status !== 'online') {
-                                console.log(`User ${member.user.username} is not online (Status: ${member.presence?.status || 'unknown'})`);
                                 continue;
-                            }
-
-                            // Check for voice state consistency
-                            const lastState = lastKnownStates.get(`${memberId}-${guildId}`);
-                            if (!lastState || lastState.channelId !== channelId) {
-                                console.log(`Recovering session for ${member.user.username}`);
-                                activityTracker.startVoiceSession(memberId, guildId, channelUserCount);
-                                lastKnownStates.set(`${memberId}-${guildId}`, {
-                                    channelId,
-                                    timestamp: Date.now()
-                                });
                             }
 
                             // Skip if user is muted or deafened
                             if (member.voice.mute || member.voice.deaf) {
-                                console.log(`User ${member.user.username} is muted or deafened`);
                                 continue;
                             }
 
                             // Skip if user is not enrolled
                             const enrolled = await isUserEnrolled(memberId, guildId);
                             if (!enrolled) {
-                                console.log(`User ${member.user.username} is not enrolled`);
                                 continue;
                             }
                             
+                            // Simple voice activity update - just get points
                             const points = activityTracker.updateVoiceActivity(
                                 memberId, 
                                 guildId, 
@@ -271,6 +249,7 @@ const voiceRewardInterval = setInterval(async () => {
                             );
 
                             if (points > 0) {
+                                console.log(`Awarding ${points} points to ${member.user.username}`);
                                 const result = await updateUserBalance(
                                     memberId, 
                                     guildId, 
@@ -292,6 +271,27 @@ const voiceRewardInterval = setInterval(async () => {
         console.error('Error in voice reward interval:', error);
     }
 }, 60000);
+
+// Add tracking data cleanup interval (every hour)
+const trackingCleanupInterval = setInterval(() => {
+    try {
+        console.log('[System] Running scheduled tracking data cleanup...');
+        const stats = activityTracker.cleanupStaleData();
+        console.log('[System] Tracking cleanup stats:', stats);
+    } catch (error) {
+        console.error('Error during tracking cleanup:', error);
+    }
+}, 3600000); // Run every hour (3600000 ms)
+
+// Add stats logging interval (every 30 minutes)
+const statsLoggingInterval = setInterval(() => {
+    try {
+        const stats = activityTracker.getStats();
+        console.log('[System] ActivityTracker stats:', stats);
+    } catch (error) {
+        console.error('Error logging stats:', error);
+    }
+}, 1800000); // Every 30 minutes (1800000 ms)
 
 startBot();
 

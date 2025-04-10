@@ -232,7 +232,7 @@ export async function updateUserBalance(userId, guildId, points, reason = '') {
         );
 
         // Log the transaction (optional)
-        console.log(`Balance update: ${userId} in ${guildId}: ${points} points (${reason}). New balance: ${newBalance}`);
+        console.log(`   Balance update: ${points} points (${reason}). New balance: ${newBalance}`);
 
         await db.run('COMMIT');
 

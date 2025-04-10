@@ -332,15 +332,29 @@ export class MessageTemplates {
             .setTimestamp();
     }
 
-    static numberGuessStartEmbed(username, bet, guess) {
+    static numberGuessStartEmbed(username, bet, multiplier) {
+        return new EmbedBuilder()
+            .setColor(COLORS.GOLD)
+            .setTitle('🎲 Number Guess')
+            .setDescription(
+                `${username} bets ${bet} 🥕\n\n` +
+                `Select a number between 1-10 to guess!\n` +
+                `If you guess correctly, you win ${multiplier}x your bet!`
+            )
+            .setFooter(this.getStandardFooter('gambling'))
+            .setTimestamp();
+    }
+
+    static numberGuessSelectEmbed(username, bet, guess) {
         return new EmbedBuilder()
             .setColor(COLORS.GOLD)
             .setTitle('🎲 Number Guess')
             .setDescription(
                 `${username} bets ${bet} 🥕\n` +
-                `Guessing number: ${guess}\n\n` +
+                `Selected number: ${guess}\n\n` +
                 `Picking number...`
             )
+            .setFooter(this.getStandardFooter('gambling'))
             .setTimestamp();
     }
 
@@ -354,6 +368,7 @@ export class MessageTemplates {
                 `Winning number: ${winning}\n\n` +
                 (won ? `You won ${winnings} 🥕` : 'Better luck next time')
             )
+            .setFooter(this.getStandardFooter('gambling'))
             .setTimestamp();
     }
 
@@ -366,6 +381,7 @@ export class MessageTemplates {
                 `**Bet:** ${bet} 🥕\n\n` +
                 `${animation ? `${animation}` : 'Flipping coin...'}`
             )
+            .setFooter(this.getStandardFooter('gambling'))
             .setFooter(this.getStandardFooter('gambling'))
             .setTimestamp();
     }

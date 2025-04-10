@@ -19,7 +19,7 @@ class ActivityTracker {
         // track hourly message counts: userId_guildID -> [timestamps]
         this.messageHourlyTracker = new Map();
 
-        // track voice activity: userId_guildID -> {joinTime, pointsEarned}
+        // Simplified voice tracking: userId_guildID -> {joinTime, pointsEarned}
         this.voiceActivity = new Map();
     }
 
@@ -43,7 +43,12 @@ class ActivityTracker {
         }
 
         // check hourly limit
-        let hourlyMessages = this.messageHourlyTracker.entries(key) || [];
+        let hourlyMessages = this.messageHourlyTracker.get(key) || [];
+        // Make sure hourlyMessages is an array
+        if (!Array.isArray(hourlyMessages)) {
+            hourlyMessages = [];
+        }
+        
         hourlyMessages = hourlyMessages.filter(time => now - time < 3600000); // last hour
 
         if (hourlyMessages.length >= REWARDS.MESSAGE.MAX_PER_HOUR) {
@@ -94,7 +99,7 @@ class ActivityTracker {
 
     /**
      * Updates voice activity tracking and calculates points earned
-     * Called periodically for users in voice channels
+     * Simplified to only count if a user is in a voice channel and not muted/deafened
      * 
      * @param {string} userId - The Discord user ID
      * @param {string} guildId - The Discord guild ID
@@ -105,16 +110,26 @@ class ActivityTracker {
         const key = `${userId}_${guildId}`;
         const activity = this.voiceActivity.get(key);
 
-        if (!activity) return 0;
-        if (channelUserCount < REWARDS.VOICE.MIN_USERS) return 0;
+        if (!activity) {
+            this.startVoiceSession(userId, guildId, channelUserCount);
+            return 0;
+        }
 
-        const now = Date.now();
+        // Simplified point earning - just earn points every minute
         const minutesSinceLastCheck = 1; // Since we're called every minute
-
         const newPoints = Math.floor(minutesSinceLastCheck * REWARDS.VOICE.POINTS_PER_MINUTE);
-        activity.pointsEarned += newPoints;
+
+        // Reset points earned after an hour (simpler than tracking hourly limits)
+        const now = Date.now();
+        const hourInMs = 3600000;
+        if (now - activity.joinTime > hourInMs) {
+            activity.joinTime = now;
+            activity.pointsEarned = newPoints;
+            return newPoints;
+        }
 
         // Check hourly limit
+        activity.pointsEarned += newPoints;
         if (activity.pointsEarned > REWARDS.VOICE.MAX_POINTS_PER_HOUR) {
             const excess = activity.pointsEarned - REWARDS.VOICE.MAX_POINTS_PER_HOUR;
             activity.pointsEarned = REWARDS.VOICE.MAX_POINTS_PER_HOUR;
@@ -144,10 +159,6 @@ class ActivityTracker {
      * @param {string} userId - The Discord user ID
      * @param {string} guildId - The Discord guild ID
      * @returns {Object|null} Session info object or null if no active session
-     * @property {number} joinTime - Timestamp when the user joined
-     * @property {number} pointsEarned - Total points earned in current session
-     * @property {number} timeSinceLastSpoke - Milliseconds since user joined
-     * @property {number} sessionDuration - Total session duration in milliseconds
      */
     getDebugInfo(userId, guildId) {
         const key = `${userId}_${guildId}`;
@@ -157,8 +168,63 @@ class ActivityTracker {
 
         return {
             ...activity,
-            timeSinceLastSpoke: Date.now() - activity.joinTime,
             sessionDuration: Date.now() - activity.joinTime
+        };
+    }
+
+    /**
+     * Cleans up stale data from the tracker maps to prevent memory leaks
+     * 
+     * @returns {Object} Statistics about the cleanup operation
+     */
+    cleanupStaleData() {
+        const now = Date.now();
+        const stats = {
+            messageCooldowns: 0,
+            messageHourlyTracker: 0,
+            voiceActivity: 0
+        };
+
+        // Clean up message cooldowns older than 1 hour
+        for (const [key, timestamp] of this.messageCooldowns.entries()) {
+            if (now - timestamp > 3600000) { // 1 hour
+                this.messageCooldowns.delete(key);
+                stats.messageCooldowns++;
+            }
+        }
+
+        // Clean up hourly message trackers
+        for (const [key, timestamps] of this.messageHourlyTracker.entries()) {
+            if (!Array.isArray(timestamps)) {
+                this.messageHourlyTracker.delete(key);
+                stats.messageHourlyTracker++;
+                continue;
+            }
+            
+            const recentTimestamps = timestamps.filter(time => now - time < 3600000);
+            
+            if (recentTimestamps.length === 0) {
+                this.messageHourlyTracker.delete(key);
+                stats.messageHourlyTracker++;
+            } else if (recentTimestamps.length !== timestamps.length) {
+                this.messageHourlyTracker.set(key, recentTimestamps);
+                stats.messageHourlyTracker++;
+            }
+        }
+
+        return stats;
+    }
+
+    /**
+     * Gets statistics about the current state of the activity tracker
+     * 
+     * @returns {Object} Current statistics of the tracker
+     */
+    getStats() {
+        return {
+            messageCooldowns: this.messageCooldowns.size,
+            messageHourlyTracker: this.messageHourlyTracker.size,
+            voiceActivity: this.voiceActivity.size
         };
     }
 }

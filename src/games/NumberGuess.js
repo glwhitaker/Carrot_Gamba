@@ -1,5 +1,6 @@
 import { Game } from './Game.js';
 import { MessageTemplates } from '../utils/messageTemplates.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 
 export class NumberGuess extends Game {
     constructor() {
@@ -10,56 +11,97 @@ export class NumberGuess extends Game {
     }
 
     parseBet(args) {
-        const guess = parseInt(args[1]); // First arg after game name is guess
-        const bet = parseInt(args[2]);   // Second arg is bet
-
-        if (isNaN(guess) || guess < this.minNumber || guess > this.maxNumber) {
-            return { error: `Please guess a number between ${this.minNumber} and ${this.maxNumber}!` };
-        }
+        const bet = parseInt(args[1]);   // First arg is bet
         if (isNaN(bet) || !this.validateBet(bet)) {
             return { error: `Bet must be at least ${this.minBet} carrots` };
         }
-        return { bet, guess };
+        return { bet };
+    }
+
+    createNumberButtons() {
+        const rows = [
+            new ActionRowBuilder(),
+            new ActionRowBuilder()
+        ];
+        
+        for (let i = this.minNumber; i <= this.maxNumber; i++) {
+            const rowIndex = i <= 5 ? 0 : 1;
+            rows[rowIndex].addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`numberguess_${i}`)
+                    .setLabel(i.toString())
+                    .setStyle(ButtonStyle.Secondary)
+            );
+        }
+        return rows;
     }
 
     async play(message, bet) {
         try {
-            const guess = parseInt(message.content.split(' ')[2]); // Get guess from command
-            // console.log(guess);
-            // Validate guess
-            if (isNaN(guess) || guess < this.minNumber || guess > this.maxNumber) {
-                return message.reply({
-                    embeds: [MessageTemplates.errorEmbed(`Please guess a number between ${this.minNumber} and ${this.maxNumber}!`)]
+            // Send initial message with number buttons
+            const initialMsg = await message.reply({
+                embeds: [MessageTemplates.numberGuessStartEmbed(message.author.username, bet, this.multiplier)],
+                components: this.createNumberButtons()
+            });
+
+            // Wait for button interaction
+            const filter = i => i.user.id === message.author.id;
+            const collector = initialMsg.createMessageComponentCollector({ filter, time: 30000 });
+
+            return new Promise((resolve) => {
+                collector.on('collect', async (interaction) => {
+                    const guess = parseInt(interaction.customId.split('_')[1]);
+                    
+                    // Disable all buttons
+                    const disabledButtons = this.createNumberButtons();
+                    disabledButtons.forEach(row => {
+                        row.components.forEach(button => button.setDisabled(true));
+                    });
+                    await initialMsg.edit({ components: disabledButtons });
+
+                    // Build suspense
+                    await interaction.reply({
+                        embeds: [MessageTemplates.numberGuessSelectEmbed(message.author.username, bet, guess)]
+                    });
+                    const suspenseMsg = await interaction.fetchReply();
+
+                    // Wait for dramatic effect
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Generate winning number
+                    const winningNumber = Math.floor(Math.random() * this.maxNumber) + 1;
+                    const won = guess === winningNumber;
+                    const winnings = won ? bet * (this.multiplier - 1) : -bet;
+
+                    // Update game stats before showing final result
+                    await this.updateGameStats(message.author.id, message.guild.id, bet, won ? 'win' : 'loss', won ? winnings + bet : winnings);
+
+                    // Update message with result
+                    await suspenseMsg.edit({
+                        embeds: [MessageTemplates.numberGuessResultEmbed(
+                            message.author.username,
+                            guess,
+                            winningNumber,
+                            won ? bet * this.multiplier : 0
+                        )]
+                    });
+
+                    collector.stop();
+                    resolve(winnings);
                 });
-            }
 
-            // Build suspense
-            const suspenseMsg = await message.reply({
-                embeds: [MessageTemplates.numberGuessStartEmbed(message.author.username, bet, guess)]
+                collector.on('end', (collected) => {
+                    if (collected.size === 0) {
+                        // Disable buttons if no selection was made
+                        const disabledButtons = this.createNumberButtons();
+                        disabledButtons.forEach(row => {
+                            row.components.forEach(button => button.setDisabled(true));
+                        });
+                        initialMsg.edit({ components: disabledButtons });
+                        resolve(0);
+                    }
+                });
             });
-
-            // Wait for dramatic effect
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Generate winning number
-            const winningNumber = Math.floor(Math.random() * this.maxNumber) + 1;
-            const won = guess === winningNumber;
-            const winnings = won ? bet * (this.multiplier - 1) : -bet;
-
-            // Update game stats before showing final result
-            await this.updateGameStats(message.author.id, message.guild.id, bet, won ? 'win' : 'loss', won ? winnings + bet : winnings);
-
-            // Update message with result
-            await suspenseMsg.edit({
-                embeds: [MessageTemplates.numberGuessResultEmbed(
-                    message.author.username,
-                    guess,
-                    winningNumber,
-                    won ? bet * this.multiplier : 0
-                )]
-            });
-
-            return winnings;
 
         } catch (error) {
             console.error('Error in number guess game:', error);
@@ -71,8 +113,8 @@ export class NumberGuess extends Game {
         return {
             name: 'Number Guess',
             value: `Guess a number between ${this.minNumber}-${this.maxNumber} to win ${this.multiplier}x your bet!\n` +
-                  `Usage: \`^gamba numberguess <number> <bet>\`\n` +
-                  `Example: \`^gamba numberguess 5 100\``
+                  `Usage: \`^gamba numberguess <bet>\`\n` +
+                  `Example: \`^gamba numberguess 100\``
         };
     }
 }

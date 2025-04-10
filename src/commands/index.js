@@ -32,6 +32,7 @@ export const commands = {
         execute: handleLeaderboard,
         description: 'View top players by balance',
         usage: '^leaderboard',
+        aliases: ['leaderboard', 'lb'],
         category: 'utility'
     },
     daily: {
