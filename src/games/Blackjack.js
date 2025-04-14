@@ -88,6 +88,26 @@ export class BlackJack extends Game {
             );
     }
 
+    isSoft17(hand) {
+        let value = 0;
+        let aces = 0;
+
+        // Calculate value without considering aces as 11
+        for (const card of hand) {
+            if (card.value === 'A') {
+                aces += 1;
+                value += 1;
+            } else if (['K', 'Q', 'J'].includes(card.value)) {
+                value += 10;
+            } else {
+                value += parseInt(card.value);
+            }
+        }
+
+        // If we have an ace and the total is 17, it's a soft 17
+        return aces > 0 && value === 17;
+    }
+
     async play(message, bet) {
         this.createDeck();
         const playerHand = [this.drawCard(), this.drawCard()];
@@ -180,11 +200,11 @@ export class BlackJack extends Game {
                         }
 
                         if (reason === 'bust') {
-                            result = 'loss';  // Changed from 'bust' to 'loss' to match our stat tracking
+                            result = 'loss';
                             winnings = -bet;
                         } else if (reason === 'stand') {
-                            // Dealer draws all cards at once
-                            while (dealerValue < 17) {
+                            // Dealer draws according to standard rules
+                            while (dealerValue < 17 || (dealerValue === 17 && this.isSoft17(dealerHand))) {
                                 dealerHand.push(this.drawCard());
                                 dealerValue = this.calculateHand(dealerHand);
                             }
