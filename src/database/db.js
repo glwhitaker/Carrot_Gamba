@@ -184,6 +184,20 @@ export async function getLeaderboard(guildId, limit = 20) {
     );
 }
 
+export async function getAllTimeLeaderboard(guildId, limit = 20) {
+    const db = getDatabase();
+    return await db.all(
+        `SELECT u.username username, p.highest_balance balance
+        FROM users u, player_stats p
+        WHERE u.guild_id = ?
+        AND p.guild_id = u.guild_id
+        AND u.user_id = p.user_id
+        ORDER BY p.highest_balance DESC
+        LIMIT ?`,
+        [guildId, limit]
+    );
+}
+
 /**
  * Update a user's balance
  * @param {string} userId - The user's Discord ID

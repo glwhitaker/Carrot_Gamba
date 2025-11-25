@@ -1,9 +1,10 @@
-import { getLeaderboard } from '../database/db.js';
+import { getAllTimeLeaderboard, getLeaderboard } from '../database/db.js';
 import { MessageTemplates } from '../utils/messageTemplates.js';
 
 export async function handleLeaderboard(message) {
     try {
         const users = await getLeaderboard(message.guild.id);
+        const all_time_users = await getAllTimeLeaderboard(message.guild.id);
 
         if(!users.length) {
             return message.reply({ 
@@ -12,7 +13,7 @@ export async function handleLeaderboard(message) {
         }
 
         return message.reply({ 
-            embeds: [MessageTemplates.leaderboardEmbed(users)]
+            embeds: [MessageTemplates.leaderboardEmbed(users), MessageTemplates.allTimeLeaderboardEmbed(all_time_users)]
         });
     } catch (error) {
         console.error('Error displaying leaderboard:', error);

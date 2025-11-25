@@ -7,6 +7,11 @@ export class CoinToss extends Game {
     }
 
     parseBet(args) {
+        // Check if the bet argument is 'max' before parsing
+        if (args[1] === 'max') {
+            return { bet: 'max' }; // Return 'max' as a special value
+        }
+        
         const bet = parseInt(args[1]); // CoinToss just needs the bet amount
         if (isNaN(bet) || !this.validateBet(bet)) {
             return { error: `Bet must be at least ${this.minBet} carrots` };

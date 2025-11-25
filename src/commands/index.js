@@ -25,7 +25,7 @@ export const commands = {
     gamba: {
         execute: handleGamble,
         description: 'Play games to win carrots',
-        usage: '^gamba <game> <bet>',
+        usage: '^gamba <game> <bet|max>',
         category: 'games'
     },
     leaderboard: {

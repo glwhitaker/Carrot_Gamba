@@ -7,6 +7,11 @@ export class Game {
     }
 
     parseBet(args) {
+        // Check if the bet argument is 'max' before parsing
+        if (args[1] === 'max') {
+            return { bet: 'max' }; // Return 'max' as a special value
+        }
+        
         const bet = parseInt(args[1]); // Default implementation assumes bet is second argument
         if (isNaN(bet) || !this.validateBet(bet)) {
             return { error: `Bet must be at least ${this.minBet} carrots` };

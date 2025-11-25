@@ -11,6 +11,11 @@ export class NumberGuess extends Game {
     }
 
     parseBet(args) {
+        // Check if the bet argument is 'max' before parsing
+        if (args[1] === 'max') {
+            return { bet: 'max' }; // Return 'max' as a special value
+        }
+        
         const bet = parseInt(args[1]);   // First arg is bet
         if (isNaN(bet) || !this.validateBet(bet)) {
             return { error: `Bet must be at least ${this.minBet} carrots` };
@@ -60,7 +65,8 @@ export class NumberGuess extends Game {
                     await initialMsg.edit({ components: disabledButtons });
 
                     // Build suspense
-                    await interaction.reply({
+                    await interaction.deferReply();
+                    await interaction.editReply({
                         embeds: [MessageTemplates.numberGuessSelectEmbed(message.author.username, bet, guess)]
                     });
                     const suspenseMsg = await interaction.fetchReply();
@@ -73,6 +79,7 @@ export class NumberGuess extends Game {
                     const won = guess === winningNumber;
                     const winnings = won ? bet * (this.multiplier - 1) : -bet;
 
+                    console.log('Calling updateGameStats with bet:', bet, typeof bet);
                     // Update game stats before showing final result
                     await this.updateGameStats(message.author.id, message.guild.id, bet, won ? 'win' : 'loss', won ? winnings + bet : winnings);
 
@@ -113,8 +120,8 @@ export class NumberGuess extends Game {
         return {
             name: 'Number Guess',
             value: `Guess a number between ${this.minNumber}-${this.maxNumber} to win ${this.multiplier}x your bet!\n` +
-                  `Usage: \`^gamba numberguess <bet>\`\n` +
-                  `Example: \`^gamba numberguess 100\``
+                  `Usage: \`^gamba numberguess <bet|max>\`\n` +
+                  `Example: \`^gamba numberguess 100\` or \`^gamba numberguess max\``
         };
     }
 }

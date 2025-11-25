@@ -183,7 +183,7 @@ export class MessageTemplates {
     static leaderboardEmbed(users) {
         // Define column widths
         const rankWidth = 5;
-        const nameWidth = 14;  // Increased a bit since we removed dividers
+        const nameWidth = 14;
         const balanceWidth = 12;
 
         // Create template for consistent spacing
@@ -208,10 +208,50 @@ export class MessageTemplates {
 
         return new EmbedBuilder()
             .setColor(COLORS.GOLD)
-            .setTitle('🏆 Carrot Leaderboard')
+            .setTitle('🏆 Current Leaderboard')
             .setDescription(
-                '```ansi\n' +    // ANSI formatting for bold
-                '\u001b[1m' + header + '\u001b[0m\n' +  // Bold header
+                '```ansi\n' +
+                '\u001b[1m' + header + '\u001b[0m\n' +
+                separator + '\n' +
+                formatLeaderboard +
+                '\n```'
+            )
+            .setFooter(this.getStandardFooter('leaderboard'))
+            .setTimestamp();
+    }
+
+    static allTimeLeaderboardEmbed(users) {
+        // Define column widths
+        const rankWidth = 5;
+        const nameWidth = 14;
+        const balanceWidth = 12;
+
+        // Create template for consistent spacing
+        const rowTemplate = (rank, name, balance) => 
+            `${rank.padEnd(rankWidth)}` +
+            `${name.padEnd(nameWidth)}` +
+            `${balance.padStart(balanceWidth)}`;
+
+        // Header and separator
+        const header = rowTemplate('RANK', 'PLAYER', 'CARROTS');
+        const separator = '─'.repeat(rankWidth + nameWidth + balanceWidth);
+
+        // Format each user row
+        const formatLeaderboard = users.map((user, index) => {
+            const position = this.getPosition(index + 1);
+            const username = user.username.length > nameWidth 
+                ? user.username.slice(0, nameWidth - 2) + '..'
+                : user.username;
+            const balance = this.formatNumber(user.balance) + ' 🥕';
+            return rowTemplate(position, username, balance);
+        }).join('\n');
+
+        return new EmbedBuilder()
+            .setColor(COLORS.GOLD)
+            .setTitle('🏆 All-Time Leaderboard')
+            .setDescription(
+                '```ansi\n' +
+                '\u001b[1m' + header + '\u001b[0m\n' +
                 separator + '\n' +
                 formatLeaderboard +
                 '\n```'

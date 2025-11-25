@@ -45,14 +45,19 @@ export async function handleGamble(message, args) {
             [message.author.id, message.guild.id]
         );
 
-        if (user.balance < bet) {
+        // Handle 'max' bet - set bet to user's full balance
+        let finalBet = bet;
+        if (bet === 'max') {
+            finalBet = user.balance;
+        }
+        
+        if (user.balance < finalBet) {
             return message.reply({ 
                 embeds: [MessageTemplates.errorEmbed('You don\'t have enough carrots!')] 
             });
         }
-
         // play the game
-        const winnings = await game.play(message, bet);
+        const winnings = await game.play(message, finalBet);
 
         // update user balance
         if (winnings !== null) {
