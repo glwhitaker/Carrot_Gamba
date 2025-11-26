@@ -147,15 +147,47 @@ class DBManager
             [user_id, guild_id]
         );
 
-        // store in cache if found
-        if(user)
-            this.user_cache.set(key, user);
+        const progression = await this.db.get(`
+            SELECT *
+            FROM user_progression
+            WHERE user_id = ?
+            AND guild_id = ?
+            `,
+            [user_id, guild_id]
+        );
 
+        // store in cache if found
+        if(user && progression)
+        {
+            const full_user = {};
+            full_user.user_id = user.user_id;
+            full_user.guild_id = user.guild_id;
+            full_user.username = user.username;
+            full_user.balance = user.balance;
+            full_user.enrollment_date = user.enrollment_date;
+            full_user.last_message_date = user.last_message_date;
+            full_user.last_daily_claim = user.last_daily_claim;
+            full_user.last_weekly_claim = user.last_weekly_claim;
+            full_user.is_dirty = false;
+
+            full_user.progression = {};
+            full_user.progression.xp = progression.xp;
+            full_user.progression.streak = progression.streak;
+
+            this.user_cache.set(key, user); 
+        }
+        
         return user;
+    }
+
+    async getUserProgression(user_id, guild_id)
+    {
+
     }
 
     async enrollUser(user_id, guild_id, username, current_time)
     {
+        // insert into users
         await this.db.run(`
             INSERT INTO users(
                 user_id,
@@ -175,20 +207,43 @@ class DBManager
             ]
         );
 
+        // insert into user_progression
+        await this.db.run(`
+            INSERT INTO user_progression(
+                user_id,
+                guild_id,
+                xp,
+                streak
+            ) VALUES (?, ?, ?, ?)`,
+            [
+                user_id,
+                guild_id,
+                0,
+                0
+            ]
+        );
+
+        // insert into player_stats
+
         // update cache
         const key = `${user_id}-${guild_id}`;
-        this.user_cache.set(key,
-        {
-            user_id: user_id,
-            guild_id: guild_id,
-            username: username,
-            balance: config.STARTING_BALANCE,
-            enrollment_date: current_time,
-            last_message_date: current_time,
-            last_daily_claim: null,
-            last_weekly_claim: null,
-            is_dirty: false
-        });
+
+        const user = {};
+        user.user_id = user_id;
+        user.guild_id = guild_id;
+        user.username = username;
+        user.balance = config.STARTING_BALANCE;
+        user.enrollment_date = current_time;
+        user.last_message_date = current_time;
+        user.last_daily_claim = null;
+        user.last_weekly_claim = null;
+        user.is_dirty = false;
+
+        user.progression = {};
+        user.progression.xp = 0;
+        user.progression.streak = 0;
+
+        this.user_cache.set(key, user);
     }
 
     async updateUser(user_id, guild_id)

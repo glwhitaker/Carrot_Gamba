@@ -1,4 +1,7 @@
-import fs from 'fs';
+const config = 
+{
+    "COMMAND_PREFIX": "^",
+    "STARTING_BALANCE": 1000
+};
 
-const config = JSON.parse(fs.readFileSync('./src2/config.json', 'utf-8'));
 export default config;
