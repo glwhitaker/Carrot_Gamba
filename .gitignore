@@ -19,6 +19,7 @@ auth.json
 *.db
 *.db-journal
 carrot_gamba.db
+carrot_gamba_v2.db
 database.db
 
 # Logs
