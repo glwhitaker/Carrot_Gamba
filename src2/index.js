@@ -38,7 +38,27 @@ async function initialize()
     }
 }
 
-initialize();
+async function shutdown()
+{
+    console.log('\n[System] Shutting down...');
+
+    try
+    {
+        // update all users before shutdown
+        await db_manager.updateAllUsers();
+        console.log('[System] Database synced. Closing Discord client...');
+
+        await client.destroy();
+
+        console.log('[System] Discord client closed. Goodbye!');
+        process.exit(0);
+    }
+    catch(error)
+    {
+        console.error('[Error] Error during shutdown:', error);
+        process.exit(1);
+    }
+}
 
 // listen for ready event
 client.once('clientReady', () =>
@@ -89,3 +109,8 @@ client.on('messageCreate', async (message) =>
 
     command_manager.executeCommand(command_name, args, message);
 });
+
+initialize();
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

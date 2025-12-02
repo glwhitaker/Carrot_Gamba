@@ -31,6 +31,6 @@ export async function handleEnroll(args, message)
 
     return message.reply({
         flags: MessageFlags.IsComponentsV2,
-        components: [MessageTemplates.successMessage('Welcome!',`You have been enrolled with ${MessageTemplates.formatNumber(config.STARTING_BALANCE)} carrots! 🥕`)]
+        components: [MessageTemplates.successMessage('Welcome!',`You have been enrolled with **${MessageTemplates.formatNumber(config.STARTING_BALANCE)}** carrots! 🥕`)]
     });
 }

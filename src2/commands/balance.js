@@ -24,6 +24,6 @@ export async function handleBalance(args, message)
 
     return message.reply({
         flags: MessageFlags.IsComponentsV2,
-        components: [MessageTemplates.errorMessage('You need to `^enroll` first before checking your balance!')]
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
     });
 }

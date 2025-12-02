@@ -2,6 +2,7 @@ import { handleDefault } from './default.js';
 import { handleEnroll } from './enroll.js';
 import { handleBalance } from './balance.js';
 import { handleDaily } from './daily.js';
+import { handleWeekly } from './weekly.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -33,7 +34,7 @@ class CommandManager
                 },
                 weekly:
                 {
-                    // execute: handleWeekly,
+                    execute: handleWeekly,
                     description: 'Claim your weekly reward',
                     usage: '^weekly'
                 },

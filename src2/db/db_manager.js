@@ -159,7 +159,6 @@ class DBManager
         // store in cache if found
         if(user && progression)
         {
-            console.log("did not use cache but found user");
             const full_user = {};
             full_user.user_id = user.user_id;
             full_user.guild_id = user.guild_id;
@@ -310,16 +309,14 @@ class DBManager
     // function to be on timer to update all users in cache to db if dirty
     async updateAllUsers()
     {
-        console.log("\n[Database] Updating all dirty users to database...");
+        console.log("[Database] Updating users...");
         for(const user of this.user_cache.values())
         {
             if(user.is_dirty)
             {
-                console.log("[Database] Updating user: " + user.username);
+                console.log("\tUpdating user: " + user.username);
                 await this.updateUser(user.user_id, user.guild_id);
                 user.is_dirty = false;
-
-                console.log(this.user_cache);
             }
         }
     }
@@ -337,6 +334,28 @@ class DBManager
         if(user)
         {
             user.last_daily_claim = timestamp;
+            user.is_dirty = true;
+        }
+    }
+
+    async updateLastWeeklyClaim(user_id, guild_id, timestamp)
+    {
+        const user = await this.getUser(user_id, guild_id);
+
+        if(user)
+        {
+            user.last_weekly_claim = timestamp;
+            user.is_dirty = true;
+        }
+    }
+
+    async updateUserBalance(user_id, guild_id, amount)
+    {
+        const user = await this.getUser(user_id, guild_id);
+
+        if(user)
+        {
+            user.balance += amount;
             user.is_dirty = true;
         }
     }

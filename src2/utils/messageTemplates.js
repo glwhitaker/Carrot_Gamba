@@ -6,7 +6,7 @@ const COLORS = {
     SUCCESS: 0x57F287,
     ERROR: 0xF04747,
     INFO: '#4F545C',
-    WARNING: '#FAA61A',
+    WARNING: 0xFAA61A,
     GOLD: '#FFB636'
 };
 
@@ -50,14 +50,12 @@ export class MessageTemplates
 
     static balanceMessage(username, balance)
     {
-        const formattedBalance = this.formatNumber(balance) + ' 🥕';
-
-        const separator = new SeparatorBuilder();
+        const formatted_balance = this.formatNumber(balance) + ' 🥕';
         const spacer = new SeparatorBuilder().setDivider(false);
 
         const header = new TextDisplayBuilder().setContent('# Carrot Bank');
         const account_field = new TextDisplayBuilder().setContent(`>>> **Account Holder**\n\`${username}\``);
-        const balance_field = new TextDisplayBuilder().setContent(`### Carrots \`\`\`${formattedBalance}\`\`\``);
+        const balance_field = new TextDisplayBuilder().setContent(`### Carrots \`\`\`${formatted_balance}\`\`\``);
 
         const thumbnail = new ThumbnailBuilder({
             media: {
@@ -65,7 +63,7 @@ export class MessageTemplates
             }
         });
 
-        const section_1 = new SectionBuilder()
+        const section = new SectionBuilder()
         .addTextDisplayComponents(
             header,
             account_field
@@ -73,9 +71,78 @@ export class MessageTemplates
         .setThumbnailAccessory(thumbnail);
 
         const container = new ContainerBuilder()
-        .addSectionComponents(section_1)
+        .setAccentColor(COLORS.SUCCESS)
+        .addSectionComponents(section)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(balance_field)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static dailyCooldownMessage(hours, minutes)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# ⏰ Daily Reward Cooldown');
+        const p = new TextDisplayBuilder().setContent(`>>> Your next daily reward will be available in:\n**${hours}** hours and **${minutes}** minutes.`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.WARNING)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static dailyRewardMessage(username, amount)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# 🎁 Daily Reward Claimed!');
+        const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${amount}** 🥕`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.SUCCESS)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static weeklyCooldownMessage(days, hours, minutes)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# ⏰ Weekly Reward Cooldown');
+        const p = new TextDisplayBuilder().setContent(`>>> Your next weekly reward will be available in:\n**${days}** days, **${hours}** hours, and **${minutes}** minutes.`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.WARNING)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static weeklyRewardMessage(username, amount)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# 🎁 Weekly Reward Claimed!');
+        const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${amount}** 🥕`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.SUCCESS)
+        .addTextDisplayComponents(header)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
