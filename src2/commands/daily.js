@@ -29,8 +29,8 @@ export async function handleDaily(args, message)
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.dailyRewardMessage(username, config.DAILY_AMOUNT)],
                 files: [{
-                    attachment:'src2/img/bank.png',
-                    name:'image.png'
+                    attachment:'src2/img/gift.png',
+                    name:'gift.png'
                 }]
             });
         }
@@ -46,7 +46,7 @@ export async function handleDaily(args, message)
                 components: [MessageTemplates.dailyCooldownMessage(hours_remaining, minutes_remaining)],
                 files: [{
                     attachment:'src2/img/clock.png',
-                    name:'image.png'
+                    name:'clock.png'
                 }]
             });
         }

@@ -29,8 +29,8 @@ export async function handleWeekly(args, message)
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.weeklyRewardMessage(username, config.WEEKLY_AMOUNT)],
                 files: [{
-                    attachment:'src2/img/bank.png',
-                    name:'image.png'
+                    attachment:'src2/img/gift.png',
+                    name:'gift.png'
                 }]
             });
         }
@@ -48,7 +48,7 @@ export async function handleWeekly(args, message)
                 components: [MessageTemplates.weeklyCooldownMessage(days_remaining, hours_remaining, minutes_remaining)],
                 files: [{
                     attachment:'src2/img/clock.png',
-                    name:'image.png'
+                    name:'clock.png'
                 }]
             });
         }

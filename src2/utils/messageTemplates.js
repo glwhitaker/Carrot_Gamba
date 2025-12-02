@@ -2,7 +2,7 @@ import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, 
 
 // colors for different types of messages
 const COLORS = {
-    PRIMARY: 0x606060,
+    PRIMARY: 0x90D5FF,
     SUCCESS: 0x57F287,
     ERROR: 0xF04747,
     INFO: '#4F545C',
@@ -71,7 +71,7 @@ export class MessageTemplates
         .setThumbnailAccessory(thumbnail);
 
         const container = new ContainerBuilder()
-        .setAccentColor(COLORS.SUCCESS)
+        .setAccentColor(COLORS.PRIMARY)
         .addSectionComponents(section)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(balance_field)
@@ -84,14 +84,25 @@ export class MessageTemplates
     static dailyCooldownMessage(hours, minutes)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
-        const header = new TextDisplayBuilder().setContent('# ⏰ Daily Reward Cooldown');
+        const header = new TextDisplayBuilder().setContent('# Daily Reward Cooldown');
         const p = new TextDisplayBuilder().setContent(`>>> Your next daily reward will be available in:\n**${hours}** hours and **${minutes}** minutes.`);
+
+        const thumbnail = new ThumbnailBuilder({
+            media: {
+                url: "attachment://clock.png"
+            }
+        });
+
+        const section = new SectionBuilder()
+        .addTextDisplayComponents(
+            header,
+            p
+        )
+        .setThumbnailAccessory(thumbnail);
 
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.WARNING)
-        .addTextDisplayComponents(header)
-        .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(p)
+        .addSectionComponents(section)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
@@ -101,14 +112,25 @@ export class MessageTemplates
     static dailyRewardMessage(username, amount)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
-        const header = new TextDisplayBuilder().setContent('# 🎁 Daily Reward Claimed!');
+        const header = new TextDisplayBuilder().setContent('# Daily Reward Claimed!');
         const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${amount}** 🥕`);
+
+        const thumbnail = new ThumbnailBuilder({
+            media: {
+                url: "attachment://gift.png"
+            }
+        });
+
+        const section = new SectionBuilder()
+        .addTextDisplayComponents(
+            header,
+            p
+        )
+        .setThumbnailAccessory(thumbnail);
 
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.SUCCESS)
-        .addTextDisplayComponents(header)
-        .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(p)
+        .addSectionComponents(section)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
@@ -118,14 +140,25 @@ export class MessageTemplates
     static weeklyCooldownMessage(days, hours, minutes)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
-        const header = new TextDisplayBuilder().setContent('# ⏰ Weekly Reward Cooldown');
+        const header = new TextDisplayBuilder().setContent('# Weekly Reward Cooldown');
         const p = new TextDisplayBuilder().setContent(`>>> Your next weekly reward will be available in:\n**${days}** days, **${hours}** hours, and **${minutes}** minutes.`);
+
+        const thumbnail = new ThumbnailBuilder({
+            media: {
+                url: "attachment://clock.png"
+            }
+        });
+
+        const section = new SectionBuilder()
+        .addTextDisplayComponents(
+            header,
+            p
+        )
+        .setThumbnailAccessory(thumbnail);
 
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.WARNING)
-        .addTextDisplayComponents(header)
-        .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(p)
+        .addSectionComponents(section)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
@@ -135,14 +168,25 @@ export class MessageTemplates
     static weeklyRewardMessage(username, amount)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
-        const header = new TextDisplayBuilder().setContent('# 🎁 Weekly Reward Claimed!');
+        const header = new TextDisplayBuilder().setContent('# Weekly Reward Claimed!');
         const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${amount}** 🥕`);
+
+        const thumbnail = new ThumbnailBuilder({
+            media: {
+                url: "attachment://gift.png"
+            }
+        });
+
+        const section = new SectionBuilder()
+        .addTextDisplayComponents(
+            header,
+            p
+        )
+        .setThumbnailAccessory(thumbnail);
 
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.SUCCESS)
-        .addTextDisplayComponents(header)
-        .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(p)
+        .addSectionComponents(section)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
