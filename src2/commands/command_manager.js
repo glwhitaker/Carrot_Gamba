@@ -1,6 +1,7 @@
 import { handleDefault } from './default.js';
 import { handleEnroll } from './enroll.js';
 import { handleBalance } from './balance.js';
+import { handleDaily } from './daily.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -26,7 +27,7 @@ class CommandManager
                 },
                 daily:
                 {
-                    // execute: handleDaily,
+                    execute: handleDaily,
                     description: 'Claim your daily reward',
                     usage: '^daily'
                 },
@@ -57,7 +58,7 @@ class CommandManager
                 leaderboard:
                 {
                     // execute: handleLeaderboard,
-                    description: 'View top players by balance',
+                    description: 'View top players',
                     usage: '^leaderboard, ^lb',
                     aliases: ['leaderboard', 'lb']
                 },
@@ -111,14 +112,23 @@ class CommandManager
     async executeCommand(command_name, args, message)
     {
         const command = this.getCommand(command_name);
-        if(command && command.execute)
+        try
         {
-            await command.execute(args, message);
+            if(command && command.execute)
+            {
+                await command.execute(args, message);
+            }
+            else
+            {
+                await handleDefault(message, 'Invalid command. Use \`^help\` to see available commands.');
+            }
         }
-        else
+        catch(error)
         {
-            await handleDefault(message);
+            console.log(`[Error] ${error}`);
+            await handleDefault(message, 'Unable to process your request. Try again later.');
         }
+        
     }
 }
 

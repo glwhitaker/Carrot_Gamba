@@ -29,13 +29,8 @@ export async function handleEnroll(args, message)
     // enroll the user if not there
     await db_manager.enrollUser(user_id, guild_id, username, current_time);
 
-    return message.reply({ 
-        embeds: [
-            MessageTemplates.successMessage
-            (
-                'Welcome!',
-                `You have been enrolled with ${MessageTemplates.formatNumber(config.STARTING_BALANCE)} carrots! 🥕`
-            )
-        ]
+    return message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.successMessage('Welcome!',`You have been enrolled with ${MessageTemplates.formatNumber(config.STARTING_BALANCE)} carrots! 🥕`)]
     });
 }

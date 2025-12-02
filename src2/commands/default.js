@@ -1,8 +1,10 @@
 import { MessageTemplates } from '../utils/messageTemplates.js';
+import { MessageFlags } from 'discord.js';
 
-export async function handleDefault(message)
+export async function handleDefault(message, m)
 {
     return message.reply({
-        embeds: [MessageTemplates.errorMessage('Invalid command. Use \`^help\` to see available commands.')]
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.errorMessage(m)]
     });
 }

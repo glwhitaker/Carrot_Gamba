@@ -159,6 +159,7 @@ class DBManager
         // store in cache if found
         if(user && progression)
         {
+            console.log("did not use cache but found user");
             const full_user = {};
             full_user.user_id = user.user_id;
             full_user.guild_id = user.guild_id;
@@ -174,10 +175,12 @@ class DBManager
             full_user.progression.xp = progression.xp;
             full_user.progression.streak = progression.streak;
 
-            this.user_cache.set(key, user); 
+            this.user_cache.set(key, full_user);
+
+            return full_user;
         }
         
-        return user;
+        return null;
     }
 
     async getUserProgression(user_id, guild_id)
@@ -209,7 +212,8 @@ class DBManager
 
         // insert into user_progression
         await this.db.run(`
-            INSERT INTO user_progression(
+            INSERT INTO user_progression
+            (
                 user_id,
                 guild_id,
                 xp,
@@ -222,8 +226,32 @@ class DBManager
                 0
             ]
         );
-
         // insert into player_stats
+        await this.db.run(`
+            INSERT INTO player_stats
+            (
+                user_id,
+                guild_id,
+                total_games_played,
+                total_games_won,
+                total_games_lost,
+                highest_balance,
+                highest_single_win,
+                highest_single_loss,
+                last_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                user_id,
+                guild_id,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                current_time
+            ]
+        );
 
         // update cache
         const key = `${user_id}-${guild_id}`;
@@ -282,14 +310,16 @@ class DBManager
     // function to be on timer to update all users in cache to db if dirty
     async updateAllUsers()
     {
-        console.log("\nUpdating all dirty users to database...");
+        console.log("\n[Database] Updating all dirty users to database...");
         for(const user of this.user_cache.values())
         {
             if(user.is_dirty)
             {
-                console.log("Updating user: " + user.username);
+                console.log("[Database] Updating user: " + user.username);
                 await this.updateUser(user.user_id, user.guild_id);
                 user.is_dirty = false;
+
+                console.log(this.user_cache);
             }
         }
     }
@@ -298,6 +328,17 @@ class DBManager
     {
         const user = await this.getUser(user_id, guild_id);
         return user ? user.balance : null;
+    }
+
+    async updateLastDailyClaim(user_id, guild_id, timestamp)
+    {
+        const user = await this.getUser(user_id, guild_id);
+
+        if(user)
+        {
+            user.last_daily_claim = timestamp;
+            user.is_dirty = true;
+        }
     }
 }
 

@@ -69,10 +69,10 @@ client.once('clientReady', () =>
     });
 
     // interval to sync cache with database
-    // setInterval(async () =>
-    // {
-    //     await db_manager.updateAllUsers();
-    // }, 30000);
+    setInterval(async () =>
+    {
+        await db_manager.updateAllUsers();
+    }, 30000);
 });
 
 // listener for messages

@@ -1,5 +1,6 @@
 import { db_manager } from '../db/db_manager.js';
 import { MessageTemplates } from '../utils/messageTemplates.js';
+import { MessageFlags } from 'discord.js';
 
 export async function handleBalance(args, message)
 {
@@ -11,12 +12,18 @@ export async function handleBalance(args, message)
 
     if(balance !== null)
     {
-        return message.reply({ 
-            embeds: [MessageTemplates.balanceMessage(username, balance)]
+        return message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.balanceMessage(username, balance)],
+            files: [{
+                attachment:'src2/img/bank.png',
+                name:'image.png'
+            }]
         });
     }
 
     return message.reply({
-        embeds: [MessageTemplates.errorMessage('You need to `!enroll` first before checking your balance!')]
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first before checking your balance!')]
     });
 }

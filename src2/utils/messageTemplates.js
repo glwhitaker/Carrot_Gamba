@@ -1,11 +1,10 @@
-import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder } from 'discord.js';
-import { command_manager } from '../commands/command_manager.js';
+import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize } from 'discord.js';
 
 // colors for different types of messages
 const COLORS = {
-    PRIMARY: 0x57F287,
-    SUCCESS: '#43B581',
-    ERROR: '#F04747',
+    PRIMARY: 0x606060,
+    SUCCESS: 0x57F287,
+    ERROR: 0xF04747,
     INFO: '#4F545C',
     WARNING: '#FAA61A',
     GOLD: '#FFB636'
@@ -16,7 +15,7 @@ export class MessageTemplates
     static getStandardFooter()
     {
         return { 
-            content: '-# Use ^help for commands \t\t\t\t\t [Carrot Gamba](https://github.com/glwhitaker/Carrot_Gamba)',
+            content: '-# [Carrot Gamba](https://github.com/glwhitaker/Carrot_Gamba)  |  Use ^help for commands',
         };
     }
 
@@ -27,22 +26,26 @@ export class MessageTemplates
     // regular error
     static errorMessage(message)
     {
-        return new EmbedBuilder()
-        .setColor(COLORS.ERROR)
-        .setTitle('Error')
-        .setDescription(message)
-        .setFooter(this.getStandardFooter('error'))
-        .setTimestamp();
+        const header = new TextDisplayBuilder().setContent(`## Error`);
+        const p = new TextDisplayBuilder().setContent(`> ${message}`);
+
+        return new ContainerBuilder()
+        .setAccentColor(COLORS.ERROR)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addTextDisplayComponents(this.getStandardFooter());
     }
 
     static successMessage(title, message)
     {
-        return new EmbedBuilder()
-        .setColor(COLORS.SUCCESS)
-        .setTitle(title)
-        .setDescription(message)
-        .setFooter(this.getStandardFooter('success'))
-        .setTimestamp();
+        const header = new TextDisplayBuilder().setContent(`## ${title}`);
+        const p = new TextDisplayBuilder().setContent(`> ${message}`);
+
+        return new ContainerBuilder()
+        .setAccentColor(COLORS.SUCCESS)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addTextDisplayComponents(this.getStandardFooter());
     }
 
     static balanceMessage(username, balance)
@@ -50,9 +53,10 @@ export class MessageTemplates
         const formattedBalance = this.formatNumber(balance) + ' 🥕';
 
         const separator = new SeparatorBuilder();
+        const spacer = new SeparatorBuilder().setDivider(false);
 
         const header = new TextDisplayBuilder().setContent('# Carrot Bank');
-        const account_field = new TextDisplayBuilder().setContent(`**Account Holder**\n\`${username}\``);
+        const account_field = new TextDisplayBuilder().setContent(`>>> **Account Holder**\n\`${username}\``);
         const balance_field = new TextDisplayBuilder().setContent(`### Carrots \`\`\`${formattedBalance}\`\`\``);
 
         const thumbnail = new ThumbnailBuilder({
@@ -69,10 +73,10 @@ export class MessageTemplates
         .setThumbnailAccessory(thumbnail);
 
         const container = new ContainerBuilder()
-        .setAccentColor(COLORS.PRIMARY)
         .addSectionComponents(section_1)
-        .addSeparatorComponents(separator)
+        .addSeparatorComponents(spacer)
         .addTextDisplayComponents(balance_field)
+        .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
         return container;
