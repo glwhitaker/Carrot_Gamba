@@ -27,7 +27,7 @@ export class MessageTemplates
     static errorMessage(message)
     {
         const header = new TextDisplayBuilder().setContent(`## Error`);
-        const p = new TextDisplayBuilder().setContent(`> ${message}`);
+        const p = new TextDisplayBuilder().setContent(`>>> ${message}`);
 
         return new ContainerBuilder()
         .setAccentColor(COLORS.ERROR)
@@ -39,7 +39,7 @@ export class MessageTemplates
     static successMessage(title, message)
     {
         const header = new TextDisplayBuilder().setContent(`## ${title}`);
-        const p = new TextDisplayBuilder().setContent(`> ${message}`);
+        const p = new TextDisplayBuilder().setContent(`>>> ${message}`);
 
         return new ContainerBuilder()
         .setAccentColor(COLORS.SUCCESS)
@@ -113,7 +113,7 @@ export class MessageTemplates
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent('# Daily Reward Claimed!');
-        const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${amount}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${this.formatNumber(amount)}** 🥕`);
 
         const thumbnail = new ThumbnailBuilder({
             media: {
@@ -169,7 +169,7 @@ export class MessageTemplates
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent('# Weekly Reward Claimed!');
-        const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${amount}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`### Carrots Earned:\n> +**${this.formatNumber(amount)}** 🥕`);
 
         const thumbnail = new ThumbnailBuilder({
             media: {

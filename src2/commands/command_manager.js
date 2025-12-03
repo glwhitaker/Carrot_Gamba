@@ -3,6 +3,7 @@ import { handleEnroll } from './enroll.js';
 import { handleBalance } from './balance.js';
 import { handleDaily } from './daily.js';
 import { handleWeekly } from './weekly.js';
+import { handleDonate } from './donate.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -40,7 +41,7 @@ class CommandManager
                 },
                 donate:
                 {
-                    // execute: handleDonate,
+                    execute: handleDonate,
                     description: 'Donate carrots to another user',
                     usage: '^donate <@user> <amount>'
                 }
@@ -117,7 +118,7 @@ class CommandManager
         {
             if(command && command.execute)
             {
-                await command.execute(args, message);
+                await command.execute(args, message, command.usage);
             }
             else
             {

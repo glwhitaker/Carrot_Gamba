@@ -49,6 +49,7 @@ class DBManager
                     user_id TEXT,
                     guild_id TEXT,
                     xp INTEGER DEFAULT 0,
+                    level INTEGER DEFAULT 1,
                     streak INTEGER DEFAULT 0,
                     PRIMARY KEY (user_id, guild_id)
                 )
@@ -172,6 +173,7 @@ class DBManager
 
             full_user.progression = {};
             full_user.progression.xp = progression.xp;
+            full_user.progression.level = progression.level;
             full_user.progression.streak = progression.streak;
 
             this.user_cache.set(key, full_user);
@@ -180,11 +182,6 @@ class DBManager
         }
         
         return null;
-    }
-
-    async getUserProgression(user_id, guild_id)
-    {
-
     }
 
     async enrollUser(user_id, guild_id, username, current_time)
@@ -216,12 +213,14 @@ class DBManager
                 user_id,
                 guild_id,
                 xp,
+                level,
                 streak
-            ) VALUES (?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?)`,
             [
                 user_id,
                 guild_id,
                 0,
+                1,
                 0
             ]
         );
@@ -268,6 +267,7 @@ class DBManager
 
         user.progression = {};
         user.progression.xp = 0;
+        user.progression.level = 1;
         user.progression.streak = 0;
 
         this.user_cache.set(key, user);
@@ -306,6 +306,35 @@ class DBManager
         );
     }
 
+    async updateUserProgression(user_id, guild_id)
+    {
+        // sync db with cache
+        const key = `${user_id}-${guild_id}`;
+        const user = this.user_cache.get(key);
+
+        if(!user)
+        {
+            user = await this.getUser(user_id, guild_id);
+        }
+        
+        await this.db.run(`
+            UPDATE user_progression
+            SET
+                xp = ?,
+                level = ?,
+                streak = ?
+            WHERE user_id = ?
+            AND guild_id = ?`,
+            [
+                user.progression.xp,
+                user.progression.level,
+                user.progression.streak,
+                user_id,
+                guild_id
+            ]
+        );
+    }
+
     // function to be on timer to update all users in cache to db if dirty
     async updateAllUsers()
     {
@@ -316,6 +345,7 @@ class DBManager
             {
                 console.log("\tUpdating user: " + user.username);
                 await this.updateUser(user.user_id, user.guild_id);
+                await this.updateUserProgression(user.user_id, user.guild_id);
                 user.is_dirty = false;
             }
         }
