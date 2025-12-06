@@ -4,6 +4,7 @@ import { handleBalance } from './balance.js';
 import { handleDaily } from './daily.js';
 import { handleWeekly } from './weekly.js';
 import { handleDonate } from './donate.js';
+import { handleGamba } from './gamba.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -50,9 +51,9 @@ class CommandManager
             {
                 gamba:
                 {
-                    // execute: handleGamble,
+                    execute: handleGamba,
                     description: 'Play games to win carrots',
-                    usage: '^gamba <game> [bet|"max"]'
+                    usage: '^gamba <game> [bet amount|"max"]'
                 }
             },
             utility:

@@ -1,6 +1,6 @@
 import { db_manager } from '../db/db_manager.js';
 import config from '../config.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
+import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
 
 export async function handleWeekly(args, message)

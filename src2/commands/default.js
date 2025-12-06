@@ -1,4 +1,4 @@
-import { MessageTemplates } from '../utils/messageTemplates.js';
+import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
 
 export async function handleDefault(message, m)

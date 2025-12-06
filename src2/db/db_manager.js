@@ -389,6 +389,21 @@ class DBManager
             user.is_dirty = true;
         }
     }
+
+    async updateUserStats(user_id, guild_id, result, bet_amount, payout)
+    {
+
+    }
+
+    async addGameToHistory(game_name, result, bet_amount, payout)
+    {
+
+    }
+
+    async updateGameStats(game_name, result, bet_amount, payout)
+    {
+
+    }
 }
 
 class DBManagerSingleton

@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 import config from './config.js';
 
-import { command_manager } from './commands/command_manager.js';
 import { db_manager } from './db/db_manager.js';
+import { command_manager } from './commands/command_manager.js';
 import { Client, GatewayIntentBits, ChannelType, ActivityType } from 'discord.js';
 
 dotenv.config();

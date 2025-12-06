@@ -1,14 +1,12 @@
 import { db_manager } from '../db/db_manager.js';
 import config from '../config.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
+import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
 
 export async function handleDonate(args, message, usage)
 {
     const user_id = message.author.id;
     const guild_id = message.guild.id;
-    const username = message.author.username;
-    const current_time = new Date();
 
     const user = await db_manager.getUser(user_id, guild_id);
 
@@ -19,7 +17,7 @@ export async function handleDonate(args, message, usage)
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(`Usage: \`${usage}\``)]
-            })
+            });
         }
 
         // parse user mention
