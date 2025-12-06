@@ -7,7 +7,7 @@ const COLORS = {
     ERROR: 0xF04747,
     INFO: '#4F545C',
     WARNING: 0xFAA61A,
-    GOLD: '#FFB636'
+    GOLD: 0xFFB636
 };
 
 export class MessageTemplates
@@ -187,6 +187,26 @@ export class MessageTemplates
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.SUCCESS)
         .addSectionComponents(section)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static coinTossMessage(username, amount, frame)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# Coin Toss`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(amount)}** 🥕`);
+
+        const coin = new TextDisplayBuilder().setContent(`# ${frame ? frame : '🪙'}`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(coin)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 

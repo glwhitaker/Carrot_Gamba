@@ -63,9 +63,11 @@ export async function handleGamba(args, message, usage)
 
         await db_manager.updateUserBalance(user_id, guild_id, payout);
     }
-
-    return message.reply({
-        flags: MessageFlags.IsComponentsV2,
-        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
-    });
+    else
+    {
+        return message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
+        });
+    }
 }
