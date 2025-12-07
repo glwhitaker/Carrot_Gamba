@@ -198,8 +198,8 @@ export class MessageTemplates
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# Coin Toss`);
         const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(amount)}** 🥕`);
-
-        const coin = new TextDisplayBuilder().setContent(`# ${frame ? frame : '🪙'}`);
+        const coin = new TextDisplayBuilder().setContent(`# ═══════    ${frame ? frame : '🪙'}    ═══════`);
+        const result_placeholder = new TextDisplayBuilder().setContent(`### Result:  ...`);
 
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.GOLD)
@@ -208,8 +208,60 @@ export class MessageTemplates
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(coin)
         .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(result_placeholder)
+        .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
         return container;
+    }
+
+    static coinTossResultMessage(username, bet_amount, result)
+    {
+        const won = result === 'win';
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# ${won ? 'You Win!' : 'You Lose!'}`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(bet_amount)}** 🥕`);
+        const coin = new TextDisplayBuilder().setContent(`#  ═══════    🪙    ═══════`);
+        const r = new TextDisplayBuilder().setContent(`### Result: ${won ? ' + '+bet_amount : ' - '+bet_amount} 🥕`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(coin)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(r)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static levelUpMessage(user, username)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# Level Up!');
+        const p = new TextDisplayBuilder().setContent(`>>> Congratulations **${username}**! You have reached **Level ${user.progression.level}**!`);
+
+        const r_header = new TextDisplayBuilder().setContent(`### Rewards Unlocked:`);
+        const r_balance = new TextDisplayBuilder().setContent(`\`\`\`+${this.formatNumber(user.progression.level * 100)} 🥕\`\`\``);
+        
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.SUCCESS)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(r_header)
+        .addTextDisplayComponents(r_balance)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static userExperienceBar(user, bet_amount, result)
+    {
+
     }
 }

@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import config from '../config.js';
+import { xp_manager } from '../user/xp_manager.js';
 
 // Singleton class to manage the database connection
 class DBManager
@@ -304,6 +305,20 @@ class DBManager
                 guild_id
             ]
         );
+
+        // update all time balance in player_stats if needed
+        await this.db.run(`
+            UPDATE player_stats
+            SET
+                highest_balance = MAX(highest_balance, ?)
+            WHERE user_id = ?
+            AND guild_id = ?`,
+            [
+                user.balance,
+                user_id,
+                guild_id
+            ]
+        );
     }
 
     async updateUserProgression(user_id, guild_id)
@@ -390,19 +405,113 @@ class DBManager
         }
     }
 
-    async updateUserStats(user_id, guild_id, result, bet_amount, payout)
+    async updateUserLevel(user_id, guild_id, bet_amount, result)
     {
+        const user = await this.getUser(user_id, guild_id);
+        const result_type = result.result;
 
+        const xp = xp_manager.calculateXP(user, bet_amount, result_type);
+
+        // update user progression
+        user.progression.xp += xp;
+
+        // check for level up
+        let leveled_up = false;
+        while(user.progression.xp >= xp_manager.requiredXPForLevel(user.progression.level))
+        {
+            user.progression.xp -= xp_manager.requiredXPForLevel(user.progression.level);
+            user.progression.level += 1;
+            leveled_up = true;
+        }
+
+        user.is_dirty = true;
+
+        return leveled_up;
     }
 
-    async addGameToHistory(game_name, result, bet_amount, payout)
+    async updateUserStats(user_id, guild_id, result, payout)
     {
+        const user = await this.getUser(user_id, guild_id);
+        const current_balance = user ? user.balance : 0;
+        await this.db.run(`
+            UPDATE player_stats
+            SET
+                total_games_played = total_games_played + 1,
+                total_games_won = total_games_won + CASE WHEN ? = 'win' THEN 1 ELSE 0 END,
+                total_games_lost = total_games_lost + CASE WHEN ? = 'loss' THEN 1 ELSE 0 END,
+                total_money_won = total_money_won + CASE WHEN ? > 0 THEN ? ELSE 0 END,
+                total_money_lost = total_money_lost + CASE WHEN ? < 0 THEN ABS(?) ELSE 0 END,
+                highest_balance = MAX(highest_balance, ?),
+                highest_single_win = MAX(highest_single_win, CASE WHEN ? > 0 THEN ? ELSE 0 END),
+                highest_single_loss = MAX(highest_single_loss, CASE WHEN ? < 0 THEN ABS(?) ELSE 0 END),
+                last_updated = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+            AND guild_id = ?`,
+            [
+                result,
+                result,
+                payout,
+                payout,
+                payout,
+                payout,
+                current_balance,
+                payout,
+                payout,
+                payout,
+                payout,
+                user_id,
+                guild_id
+            ]
+        );
+    }
 
+    async addGameToHistory(user_id, guild_id, game_name, result, bet_amount, payout)
+    {
+        await this.db.run(`
+            INSERT INTO game_history
+            (
+                game_name,
+                user_id,
+                guild_id,
+                bet_amount,
+                result,
+                payout
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                game_name,
+                user_id,
+                guild_id,
+                bet_amount,
+                result,
+                payout
+            ]
+        );
     }
 
     async updateGameStats(game_name, result, bet_amount, payout)
     {
-
+        await this.db.run(`
+            UPDATE game_stats
+            SET
+                total_games_played = total_games_played + 1,
+                total_games_won = total_games_won + CASE WHEN ? = 'win' THEN 1 ELSE 0 END,
+                total_games_lost = total_games_lost + CASE WHEN ? = 'loss' THEN 1 ELSE 0 END,
+                total_money_wagered = total_money_wagered + ?,
+                total_money_won = total_money_won + CASE WHEN ? > 0 THEN ? ELSE 0 END,
+                total_money_lost = total_money_lost + CASE WHEN ? < 0 THEN ABS(?) ELSE 0 END,
+                last_updated = CURRENT_TIMESTAMP
+            WHERE game_name = ?`,
+            [
+                result,
+                result,
+                bet_amount,
+                payout,
+                payout,
+                payout,
+                payout,
+                game_name
+            ]
+        );
     }
 }
 

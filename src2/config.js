@@ -5,7 +5,14 @@ const config =
     "DAILY_COOLDOWN_MS": 24 * 60 * 60 * 1000,
     "DAILY_AMOUNT": 1000,
     "WEEKLY_COOLDOWN_MS": 7 * 24 * 60 * 60 * 1000,
-    "WEEKLY_AMOUNT": 10000
+    "WEEKLY_AMOUNT": 10000,
+    "XP_A": 0.6,
+    "BASE_XP": 20,
+    "BASE_BET": 1000,
+    "WIN_MULTIPLIER": 1.2,
+    "LOSS_MULTIPLIER": 0.8,
+    "BASE_REQ_XP": 100,
+    "XP_EXPONENT": 1.5
 };
 
 export default config;

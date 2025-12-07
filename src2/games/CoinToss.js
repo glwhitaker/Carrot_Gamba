@@ -9,7 +9,7 @@ export class CoinToss extends Game
         super('cointoss');
     }
 
-    async play(message, bet_amount)
+    async play(user, message, bet_amount)
     {
         const user_id = message.author.id;
         const guild_id = message.guild.id;
@@ -19,8 +19,8 @@ export class CoinToss extends Game
         const payout = win ? bet_amount : -bet_amount;
         const result = win ? 'win' : 'loss';
 
-        const animation_frames = ['💫', '🪙', '💫', '🪙', '💫', '🪙'];
-        
+        const animation_frames = ['💫', '🪙', '💫', '🪙'];
+
         // send initial message that game has started
         const game_message = await message.reply({
             flags: MessageFlags.IsComponentsV2,
@@ -29,16 +29,28 @@ export class CoinToss extends Game
 
         // animate coin toss
         for (const frame of animation_frames) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 200));
             await game_message.edit({
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.coinTossMessage(username, bet_amount, frame)]
             });
         }
+
         // show final result after animation
+        await game_message.edit({
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+                MessageTemplates.coinTossResultMessage(username, bet_amount, result)
+                // MessageTemplates.userExperienceBar(user, bet_amount, result)
+            ]
+        });
 
         await this.updateStats(user_id, guild_id, bet_amount, result, payout);
 
-        return payout;
+        const res = {};
+        res.result = result;
+        res.payout = payout;
+
+        return res;
     }
 }

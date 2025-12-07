@@ -1,0 +1,50 @@
+import config from '../config.js';
+
+class XPManager
+{
+    calculateXP(user, bet_amount, result)
+    {
+        const clamp = function(num, min, max)
+        {
+            return Math.max(min, Math.min(max, num));
+        }
+
+        // calculate xp gain
+        const p = clamp(bet_amount / Math.max(user.balance, 1), 0, 1);
+        const m = clamp(Math.sqrt(bet_amount) / Math.sqrt(config.BASE_BET), 0, 1);
+
+        const raw = config.XP_A * p + (1 - config.XP_A) * m;
+        const s = 1 + Math.log10(bet_amount + 1);
+
+        const raw_xp = config.BASE_XP * raw * s;
+
+        const xp = Math.floor(raw_xp * (result === 'win' ? config.WIN_MULTIPLIER : config.LOSS_MULTIPLIER));
+
+        return xp;
+    }
+
+    requiredXPForLevel(level)
+    {
+        const req = Math.floor(config.BASE_REQ_XP * Math.pow(level, config.XP_EXPONENT));
+        return req;
+    }
+}
+
+
+class XPManagerSingleton
+{
+    constructor()
+    {
+        if(!XPManagerSingleton.instance)
+        {
+            XPManagerSingleton.instance = new XPManager();
+        }
+    }
+
+    getInstance()
+    {
+        return XPManagerSingleton.instance;
+    }
+}
+
+export const xp_manager = new XPManagerSingleton().getInstance();

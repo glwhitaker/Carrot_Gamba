@@ -59,9 +59,20 @@ export async function handleGamba(args, message, usage)
             });
         }
         
-        const payout = await game.play(message, bet_amount);
+        const result = await game.play(user, message, bet_amount);
 
-        await db_manager.updateUserBalance(user_id, guild_id, payout);
+        await db_manager.updateUserBalance(user_id, guild_id, result.payout);
+        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, bet_amount, result);
+
+        // send user message instead of reply to message
+        if(lvl_up)
+        {
+            const user = await db_manager.getUser(user_id, guild_id);
+            return message.reply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.levelUpMessage(user, username)]
+            });
+        }
     }
     else
     {
