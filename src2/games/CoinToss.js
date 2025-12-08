@@ -29,7 +29,7 @@ export class CoinToss extends Game
 
         // animate coin toss
         for (const frame of animation_frames) {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 500));
             await game_message.edit({
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.coinTossMessage(username, bet_amount, frame)]

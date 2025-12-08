@@ -1,4 +1,6 @@
 import config from '../config.js';
+import { db_manager } from '../db/db_manager.js';
+import { item_manager } from '../items/item_manager.js';
 
 class XPManager
 {
@@ -27,6 +29,25 @@ class XPManager
     {
         const req = Math.floor(config.BASE_REQ_XP * Math.pow(level, config.XP_EXPONENT));
         return req;
+    }
+
+    getLevelRewards(level)
+    {
+        const rewards = [];
+        rewards.push({type: 'carrots', amount: level * 1000});
+        return rewards;
+    }
+
+    async applyLevelRewards(user, level)
+    {
+        const rewards = this.getLevelRewards(level);
+        for(const reward of rewards)
+        {
+            if(reward.type === 'carrots')
+                await db_manager.updateUserBalance(user.user_id, user.guild_id, reward.amount);
+            else
+                await item_manager.giveItemToUser(user.user_id, user.guild_id, reward.type, reward.amount);
+        }
     }
 }
 

@@ -108,6 +108,18 @@ class DBManager
                 )
             `);
 
+            // create items table
+            await this.db.exec(`
+                CREATE TABLE IF NOT EXISTS user_items
+                (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT,
+                    user_id TEXT,
+                    guild_id TEXT,
+                    created_on DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+
             // Initialize game_stats with existing games
             await this.db.exec(`
                 INSERT OR IGNORE INTO game_stats (game_name) VALUES 
@@ -353,12 +365,11 @@ class DBManager
     // function to be on timer to update all users in cache to db if dirty
     async updateAllUsers()
     {
-        console.log("[Database] Updating users...");
         for(const user of this.user_cache.values())
         {
             if(user.is_dirty)
             {
-                console.log("\tUpdating user: " + user.username);
+                console.log("Updating user: " + user.username);
                 await this.updateUser(user.user_id, user.guild_id);
                 await this.updateUserProgression(user.user_id, user.guild_id);
                 user.is_dirty = false;
@@ -512,6 +523,27 @@ class DBManager
                 game_name
             ]
         );
+    }
+
+    async addItemToUserInventory(user_id, guild_id, item_key, quantity)
+    {
+        for(let i = 0; i < quantity; i++)
+        {
+            await this.db.run(`
+                INSERT INTO user_items
+                (
+                    name,
+                    user_id,
+                    guild_id,
+                    created_on
+                ) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+                [
+                    item_key,
+                    user_id,
+                    guild_id
+                ]
+            );
+        }
     }
 }
 

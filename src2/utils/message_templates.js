@@ -10,6 +10,15 @@ const COLORS = {
     GOLD: 0xFFB636
 };
 
+const RARITY_COLORS = {
+    COMMON: 0xAAAAAA,
+    UNCOMMON: 0x87CEEB,
+    RARE: 0x6495ED,
+    EPIC: 0xDA70D6,
+    LEGENDARY: 0xFFD700,
+    MYTHIC: 0xFF6B6B
+};
+
 export class MessageTemplates
 {
     static getStandardFooter()
@@ -21,6 +30,22 @@ export class MessageTemplates
 
     static formatNumber(number) {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    
+    static getLevelColor(level)
+    {
+        const colors = [
+            RARITY_COLORS.COMMON,
+            RARITY_COLORS.UNCOMMON,
+            RARITY_COLORS.RARE,
+            RARITY_COLORS.EPIC,
+            RARITY_COLORS.LEGENDARY,
+            RARITY_COLORS.MYTHIC
+        ];
+        
+        const color_index = Math.min(
+        Math.floor((level - 1) / (100 / colors.length)), colors.length - 1);
+        return colors[color_index];
     }
 
     // regular error
@@ -222,7 +247,7 @@ export class MessageTemplates
         const header = new TextDisplayBuilder().setContent(`# ${won ? 'You Win!' : 'You Lose!'}`);
         const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(bet_amount)}** 🥕`);
         const coin = new TextDisplayBuilder().setContent(`#  ═══════    🪙    ═══════`);
-        const r = new TextDisplayBuilder().setContent(`### Result: ${won ? ' + '+bet_amount : ' - '+bet_amount} 🥕`);
+        const r = new TextDisplayBuilder().setContent(`### Result: ${won ? ' + '+this.formatNumber(bet_amount) : ' - '+this.formatNumber(bet_amount)} 🥕`);
 
         const container = new ContainerBuilder()
         .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR)
@@ -238,21 +263,24 @@ export class MessageTemplates
         return container;
     }
 
-    static levelUpMessage(user, username)
+    static levelUpMessage(user, username, rewards)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
-        const header = new TextDisplayBuilder().setContent('# Level Up!');
-        const p = new TextDisplayBuilder().setContent(`>>> Congratulations **${username}**! You have reached **Level ${user.progression.level}**!`);
+        const p = new TextDisplayBuilder().setContent(`> Congratulations <@${user.user_id}>!`);
+        const lvl = new TextDisplayBuilder().setContent(`## **Level ${user.progression.level - 1}**   →   **Level ${user.progression.level}**`);
 
-        const r_header = new TextDisplayBuilder().setContent(`### Rewards Unlocked:`);
-        const r_balance = new TextDisplayBuilder().setContent(`\`\`\`+${this.formatNumber(user.progression.level * 100)} 🥕\`\`\``);
+        let rewards_string = "";
+        for(const reward of rewards)
+        {
+            rewards_string += `\n+ ${reward.amount} ${reward.type === 'carrots' ? '🥕' : reward.type}`;
+        }
+
+        const r_balance = new TextDisplayBuilder().setContent(`### Rewards\n\`\`\`${rewards_string}\`\`\``);
         
         const container = new ContainerBuilder()
-        .setAccentColor(COLORS.SUCCESS)
-        .addTextDisplayComponents(header)
+        .setAccentColor(this.getLevelColor(user.progression.level))
+        .addTextDisplayComponents(lvl)
         .addTextDisplayComponents(p)
-        .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(r_header)
         .addTextDisplayComponents(r_balance)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());

@@ -1,5 +1,6 @@
 import { db_manager } from '../db/db_manager.js';
 import { game_manager } from '../games/game_manager.js';
+import { xp_manager } from '../user/xp_manager.js';
 import config from '../config.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
@@ -68,9 +69,11 @@ export async function handleGamba(args, message, usage)
         if(lvl_up)
         {
             const user = await db_manager.getUser(user_id, guild_id);
-            return message.reply({
+            const rewards = xp_manager.getLevelRewards(user.progression.level);
+            await xp_manager.applyLevelRewards(user, user.progression.level);
+            return message.channel.send({
                 flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.levelUpMessage(user, username)]
+                components: [MessageTemplates.levelUpMessage(user, username, rewards)]
             });
         }
     }
