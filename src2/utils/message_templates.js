@@ -1,5 +1,5 @@
 import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize } from 'discord.js';
-
+import { item_manager } from '../items/item_manager.js';
 // colors for different types of messages
 const COLORS = {
     PRIMARY: 0x90D5FF,
@@ -240,7 +240,7 @@ export class MessageTemplates
         return container;
     }
 
-    static coinTossResultMessage(username, bet_amount, result)
+    static coinTossResultMessage(username, bet_amount, result, post_game_items)
     {
         const won = result === 'win';
         const spacer = new SeparatorBuilder().setDivider(false);
@@ -257,8 +257,22 @@ export class MessageTemplates
         .addTextDisplayComponents(coin)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(r)
-        .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(this.getStandardFooter());
+
+        let item_list = "";
+        if(post_game_items && post_game_items.length > 0)
+        {
+            for(const item of post_game_items)
+            {
+                const full_item = item_manager.getItem(item.key);
+                item_list += `\n${full_item.icon} ${full_item.name} x${item.quantity}`;
+            }
+            const item_text = new TextDisplayBuilder().setContent(`### Items Available:\n\`\`\`${item_list}\`\`\``);
+            container.addSeparatorComponents(spacer);
+            container.addTextDisplayComponents(item_text);
+        }
+        
+
+        container.addTextDisplayComponents(this.getStandardFooter());
 
         return container;
     }
@@ -272,7 +286,7 @@ export class MessageTemplates
         let rewards_string = "";
         for(const reward of rewards)
         {
-            rewards_string += `\n+ ${reward.amount} ${reward.type === 'carrots' ? '🥕' : reward.type}`;
+            rewards_string += `\n+ ${reward.amount} ${reward.key === 'carrots' ? '🥕' : item_manager.getItem(reward.key).name}`;
         }
 
         const r_balance = new TextDisplayBuilder().setContent(`### Rewards\n\`\`\`${rewards_string}\`\`\``);
@@ -291,5 +305,27 @@ export class MessageTemplates
     static userExperienceBar(user, bet_amount, result)
     {
 
+    }
+
+    static itemActivatedMessage(user, item_key)
+    {
+        const item = item_manager.getItem(item_key);
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# Item Activated!');
+        const p = new TextDisplayBuilder().setContent(`>>> **${item.name}**  ${item.icon}\n*${item.desc}*`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.SUCCESS)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static userStatsMessage(user, stats)
+    {
+        
     }
 }

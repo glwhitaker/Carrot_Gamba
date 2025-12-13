@@ -1,4 +1,5 @@
 import { Game } from './Game.js';
+import { item_manager } from "../items/item_manager.js";
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
 
@@ -9,7 +10,7 @@ export class CoinToss extends Game
         super('cointoss');
     }
 
-    async play(user, message, bet_amount)
+    async play(user, message, bet_amount, item_used)
     {
         const user_id = message.author.id;
         const guild_id = message.guild.id;
@@ -41,16 +42,12 @@ export class CoinToss extends Game
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.coinTossResultMessage(username, bet_amount, result)
-                // MessageTemplates.userExperienceBar(user, bet_amount, result)
             ]
         });
-
-        await this.updateStats(user_id, guild_id, bet_amount, result, payout);
-
-        const res = {};
-        res.result = result;
-        res.payout = payout;
-
+        
+        const res = {result: result, payout: payout};
+        await this.updateStats(user_id, guild_id, bet_amount, res.result, res.payout);
+        
         return res;
     }
 }

@@ -11,7 +11,7 @@ const config =
     "BASE_BET": 1000,
     "WIN_MULTIPLIER": 1.2,
     "LOSS_MULTIPLIER": 0.8,
-    "BASE_REQ_XP": 100,
+    "BASE_REQ_XP": 1,
     "XP_EXPONENT": 1.5
 };
 

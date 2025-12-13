@@ -62,6 +62,8 @@ export async function handleGamba(args, message, usage)
         
         const result = await game.play(user, message, bet_amount);
 
+        const final_result = await applyItemEffects(user, message, bet_amount, result, game);
+
         await db_manager.updateUserBalance(user_id, guild_id, result.payout);
         const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, bet_amount, result);
 
@@ -84,4 +86,9 @@ export async function handleGamba(args, message, usage)
             components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
         });
     }
+}
+
+async function applyItemEffects(user, message, bet_amount, result, game)
+{
+    // placeholder for item effects application
 }

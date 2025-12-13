@@ -52,6 +52,7 @@ class DBManager
                     xp INTEGER DEFAULT 0,
                     level INTEGER DEFAULT 1,
                     streak INTEGER DEFAULT 0,
+                    passive_multiplier REAL DEFAULT 1.0,
                     PRIMARY KEY (user_id, guild_id)
                 )
             `);
@@ -113,9 +114,11 @@ class DBManager
                 CREATE TABLE IF NOT EXISTS user_items
                 (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT,
+                    key TEXT,
                     user_id TEXT,
                     guild_id TEXT,
+                    uses_left INTEGER DEFAULT 1,
+                    meta_data TEXT,
                     created_on DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `);
@@ -188,6 +191,7 @@ class DBManager
             full_user.progression.xp = progression.xp;
             full_user.progression.level = progression.level;
             full_user.progression.streak = progression.streak;
+            full_user.progression.passive_multiplier = progression.passive_multiplier;
 
             this.user_cache.set(key, full_user);
 
@@ -440,6 +444,17 @@ class DBManager
         return leveled_up;
     }
 
+    async updateUserPassiveGain(user_id, guild_id, multiplier)
+    {
+        const user = await this.getUser(user_id, guild_id);
+        
+        if(user)
+        {
+            user.progression.passive_multiplier += multiplier;
+            user.is_dirty = true;
+        }
+    }
+
     async updateUserStats(user_id, guild_id, result, payout)
     {
         const user = await this.getUser(user_id, guild_id);
@@ -474,6 +489,22 @@ class DBManager
                 guild_id
             ]
         );
+    }
+
+    async getUserStats(user_id, guild_id)
+    {
+        const stats = await this.db.get(`
+            SELECT *
+            FROM player_stats
+            WHERE user_id = ?
+            AND guild_id = ?`,
+            [
+                user_id,
+                guild_id
+            ]
+        );
+
+        return stats;
     }
 
     async addGameToHistory(user_id, guild_id, game_name, result, bet_amount, payout)
@@ -525,25 +556,47 @@ class DBManager
         );
     }
 
-    async addItemToUserInventory(user_id, guild_id, item_key, quantity)
+    async addItemToUserInventory(user_id, guild_id, item, quantity)
     {
+        const item_key = item.key;
+        const item_uses = item.max_uses;
         for(let i = 0; i < quantity; i++)
         {
             await this.db.run(`
                 INSERT INTO user_items
                 (
-                    name,
+                    key,
                     user_id,
                     guild_id,
-                    created_on
-                ) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+                    created_on,
+                    uses_left
+                ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)`,
                 [
                     item_key,
                     user_id,
-                    guild_id
+                    guild_id,
+                    item_uses
                 ]
             );
         }
+    }
+
+    async getUserItems(user_id, guild_id)
+    {
+        // get item key and quantity
+        const items = await this.db.all(`
+            SELECT key, COUNT(*) as quantity
+            FROM user_items
+            WHERE user_id = ?
+            AND guild_id = ?
+            GROUP BY key`,
+            [
+                user_id,
+                guild_id
+            ]
+        );
+
+        return items;
     }
 }
 

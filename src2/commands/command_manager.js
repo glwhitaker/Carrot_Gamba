@@ -5,6 +5,8 @@ import { handleDaily } from './daily.js';
 import { handleWeekly } from './weekly.js';
 import { handleDonate } from './donate.js';
 import { handleGamba } from './gamba.js';
+import { handleUse } from './use.js';
+import { handleStats } from './stats.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -74,9 +76,18 @@ class CommandManager
                 },
                 stats:
                 {
-                    // execute: handleStats,
+                    execute: handleStats,
                     description: 'View gamba statistics',
                     usage: '^stats [me|@user|games <game>]'
+                }
+            },
+            items:
+            {
+                use:
+                {
+                    execute: handleUse,
+                    description: 'Use an item from your inventory',
+                    usage: '^use <item_name>'
                 }
             }
         };
@@ -128,7 +139,9 @@ class CommandManager
         }
         catch(error)
         {
-            console.log(`[Error] ${error}`);
+            // trace error
+            console.error(`Error executing command ${command_name}:`, error);
+            console.error(error.stack);
             await handleDefault(message, 'Unable to process your request. Try again later.');
         }
         

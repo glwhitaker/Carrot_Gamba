@@ -34,7 +34,12 @@ class XPManager
     getLevelRewards(level)
     {
         const rewards = [];
-        rewards.push({type: 'carrots', amount: level * 1000});
+        rewards.push({key: 'carrots', amount: level * 1000});
+        rewards.push({key: 'second_chance_token', amount: 1});
+        rewards.push({key: 'loss_cushion', amount: 1});
+        rewards.push({key: 'jackpot_juice', amount: 1});
+        rewards.push({key: 'carrot_surge', amount: 1});
+        rewards.push({key: 'number_oracle', amount: 1});
         return rewards;
     }
 
@@ -43,11 +48,14 @@ class XPManager
         const rewards = this.getLevelRewards(level);
         for(const reward of rewards)
         {
-            if(reward.type === 'carrots')
+            if(reward.key === 'carrots')
                 await db_manager.updateUserBalance(user.user_id, user.guild_id, reward.amount);
             else
-                await item_manager.giveItemToUser(user.user_id, user.guild_id, reward.type, reward.amount);
+                await item_manager.giveItemToUser(user.user_id, user.guild_id, reward.key, reward.amount);
         }
+
+        // give user plus 10% passive carrot gain
+        await db_manager.updateUserPassiveGain(user.user_id, user.guild_id, 0.1);
     }
 }
 
