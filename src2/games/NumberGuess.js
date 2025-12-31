@@ -2,11 +2,11 @@ import { Game } from './Game.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
 
-export class CoinToss extends Game
+export class NumberGuess extends Game
 {
     constructor()
     {
-        super('cointoss');
+        super('numberguess');
         this.multiplier = 10;
         this.max_number = 10;
         this.min_number = 1;

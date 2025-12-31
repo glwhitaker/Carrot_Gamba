@@ -8,7 +8,7 @@ class ItemManager
             "second_chance_token" : {
                 "key": "second_chance_token",
                 "name": "Second Chance Token",
-                "desc": "Grants a second chance on a lost bet, giving you another opportunity to win the same amount.",
+                "desc": "Grants a second chance on your next lost bet, giving you another opportunity to win the same amount.",
                 "icon": "🌀",
                 "price": 5000,
                 "max_uses": 1
@@ -16,7 +16,7 @@ class ItemManager
             "loss_cushion": {
                 "key": "loss_cushion",
                 "name": "Loss Cushion",
-                "desc": "Reduces the amount lost on a failed bet by 50%.",
+                "desc": "Reduces the amount lost on your next failed bet by 50%.",
                 "icon": "🛡️",
                 "price": 3000,
                 "max_uses": 1
@@ -71,6 +71,21 @@ class ItemManager
     async getActiveItemsForUser(user_id, guild_id)
     {
         return this.current_items_activated[`${guild_id}-${user_id}`] || [];
+    }
+
+    async consumeItemForUser(user_id, guild_id, item_key, quantity)
+    {
+        if(!quantity)
+            quantity = 1;
+
+        // remove item from active items
+        if(this.current_items_activated[`${guild_id}-${user_id}`])
+        {
+            this.current_items_activated[`${guild_id}-${user_id}`] = this.current_items_activated[`${guild_id}-${user_id}`].filter(i => i.key !== item_key);
+        }
+
+        // remove item from user's inventory
+        await db_manager.removeItemFromUserInventory(user_id, guild_id, item_key, quantity);
     }
 }
 

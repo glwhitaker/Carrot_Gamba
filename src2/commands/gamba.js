@@ -1,4 +1,5 @@
 import { db_manager } from '../db/db_manager.js';
+import { item_manager } from '../items/item_manager.js';
 import { game_manager } from '../games/game_manager.js';
 import { xp_manager } from '../user/xp_manager.js';
 import config from '../config.js';
@@ -64,9 +65,11 @@ export async function handleGamba(args, message, usage)
 
         const final_result = await applyItemEffects(user, message, bet_amount, result, game);
 
-        await db_manager.updateUserBalance(user_id, guild_id, result.payout);
-        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, bet_amount, result);
+        // wait for final result from item effects to update stats and balance
+        await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
+        await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);
 
+        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, bet_amount, final_result);
         // send user message instead of reply to message
         if(lvl_up)
         {
@@ -91,4 +94,26 @@ export async function handleGamba(args, message, usage)
 async function applyItemEffects(user, message, bet_amount, result, game)
 {
     // placeholder for item effects application
+    let modified_result = result;
+    // loop through user's active items and apply effects
+    const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+
+    for(const item of active_items)
+    {
+        if(item.key === 'second_chance_token' && result.result === 'loss')
+        {
+            // item used message
+            await message.reply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.itemUsedMessage(user, item.key)]
+            });
+            // give user a second chance
+            const second_chance_result = await game.play(user, message, bet_amount, item.key);
+            modified_result = second_chance_result;
+            // remove item from active items
+            await item_manager.consumeItemForUser(user.user_id, user.guild_id, item.key, 1);
+        }
+    }
+
+    return modified_result;
 }

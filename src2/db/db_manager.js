@@ -598,6 +598,29 @@ class DBManager
 
         return items;
     }
+    
+    async removeItemFromUserInventory(user_id, guild_id, item_key, quantity)
+    {
+        // remove quantity of items from user's inventory, starting with the oldest
+        await this.db.run(`
+            DELETE FROM user_items
+            WHERE id IN (
+                SELECT id
+                FROM user_items
+                WHERE user_id = ?
+                AND guild_id = ?
+                AND key = ?
+                ORDER BY created_on ASC
+                LIMIT ?
+            )`,
+            [
+                user_id,
+                guild_id,
+                item_key,
+                quantity
+            ]
+        );
+    }
 }
 
 class DBManagerSingleton

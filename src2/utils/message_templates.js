@@ -1,11 +1,12 @@
 import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize } from 'discord.js';
 import { item_manager } from '../items/item_manager.js';
+import { xp_manager } from '../user/xp_manager.js';
 // colors for different types of messages
 const COLORS = {
     PRIMARY: 0x90D5FF,
     SUCCESS: 0x57F287,
     ERROR: 0xF04747,
-    INFO: '#4F545C',
+    INFO: 0x4F545C,
     WARNING: 0xFAA61A,
     GOLD: 0xFFB636
 };
@@ -302,8 +303,24 @@ export class MessageTemplates
         return container;
     }
 
-    static userExperienceBar(user, bet_amount, result)
+    static userExperienceBar(user)
     {
+        // build xp bar from level and required xp
+        const level = user.progression.level;
+        const current_xp = user.progression.xp;
+
+        const required_xp = xp_manager.requiredXPForLevel(level);
+
+        const bar_length = 20;
+        const filled_length = Math.floor((current_xp / required_xp) * bar_length);
+        const empty_length = bar_length - filled_length;
+
+        const filled_bar = '▰'.repeat(filled_length);
+        const empty_bar = '▱'.repeat(empty_length);
+
+        const xp_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n\u001b[1mLEVEL ${level}\u001b[0m\n${filled_bar}${empty_bar} ${this.formatNumber(current_xp)} / ${this.formatNumber(required_xp)} XP\`\`\``);
+
+        return xp_field;
 
     }
 
@@ -324,8 +341,71 @@ export class MessageTemplates
         return container;
     }
 
+    static itemUsedMessage(user, item_key)
+    {
+        const item = item_manager.getItem(item_key);
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# Item Consumed!');
+        const p = new TextDisplayBuilder().setContent(`>>> **${item.name}**  ${item.icon}`);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.INFO)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
     static userStatsMessage(user, stats)
     {
-        
+        // we have access to user info and progression on user object, and user stats passed in
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# Gamba Statistics\n>>> Statistics for <@${user.user_id}>`);
+
+        // get user xp bar
+        const xp_bar = this.userExperienceBar(user);
+
+        // column width for table
+        const stat_name_width = 37;
+        const stat_value_width = 15;
+
+        const rowTemplate = (name, value) => `${name.padEnd(stat_name_width)}${value.padStart(stat_value_width)}`;
+
+        const stats_table = [
+            rowTemplate('\u001b[1mHighest Balance:\u001b[0m', this.formatNumber(stats.highest_balance) + ' 🥕'),
+            rowTemplate('\u001b[1mTotal Carrots Won:\u001b[0m', this.formatNumber(stats.total_money_won) + ' 🥕'),
+            rowTemplate('\u001b[1mTotal Carrots Lost:\u001b[0m', this.formatNumber(stats.total_money_lost) + ' 🥕'),
+            rowTemplate('\u001b[1mBiggest Win:\u001b[0m', this.formatNumber(stats.highest_single_win) + ' 🥕'),
+            rowTemplate('\u001b[1mBiggest Loss:\u001b[0m', this.formatNumber(stats.highest_single_loss) + ' 🥕')
+            
+        ].join('\n');
+
+        const games_table = [
+            rowTemplate('\u001b[1mTotal Games Played:\u001b[0m', this.formatNumber(stats.total_games_played)),
+            rowTemplate('\u001b[1mTotal Wins:\u001b[0m', this.formatNumber(stats.total_games_won)),
+            rowTemplate('\u001b[1mTotal Losses:\u001b[0m', this.formatNumber(stats.total_games_lost)),
+            rowTemplate('\u001b[1mWin Rate:\u001b[0m', ((stats.total_games_won / Math.max(stats.total_games_played, 1)) * 100).toFixed(2) + '%')
+        ].join('\n');
+
+        const stats_field = `\`\`\`ansi\n${stats_table}\`\`\``;
+        const games_field = `\`\`\`ansi\n${games_table}\`\`\``;
+
+        const stats_text = new TextDisplayBuilder().setContent(stats_field);
+        const games_text = new TextDisplayBuilder().setContent(games_field);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.INFO)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(
+            xp_bar,
+            stats_text,
+            games_text
+        )
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
     }
 }

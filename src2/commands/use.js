@@ -42,7 +42,7 @@ export async function handleUse(args, message, usage)
         {
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.errorMessage(`You don't have any **${item_manager.getItem(item_key).name}** to use.`)]
+                components: [MessageTemplates.errorMessage(`You don't have a **${item_manager.getItem(item_key).name}** to use.`)]
             });
         }
 
@@ -61,6 +61,8 @@ export async function handleUse(args, message, usage)
             item_manager.current_items_activated[`${guild_id}-${user_id}`] = [];
 
         item_manager.current_items_activated[`${guild_id}-${user_id}`].push(item);
+
+        // consume item from user's inventory
 
         return message.reply({
             flags: MessageFlags.IsComponentsV2,

@@ -44,9 +44,8 @@ export class CoinToss extends Game
                 MessageTemplates.coinTossResultMessage(username, bet_amount, result)
             ]
         });
-        
+
         const res = {result: result, payout: payout};
-        await this.updateStats(user_id, guild_id, bet_amount, res.result, res.payout);
         
         return res;
     }

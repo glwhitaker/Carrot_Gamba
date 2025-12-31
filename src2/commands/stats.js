@@ -22,6 +22,29 @@ export async function handleStats(args, message, usage)
                 components: [MessageTemplates.userStatsMessage(user, stats)]
             });
         }
+
+        // show stats for another user
+        if(args.length === 1 && args[0].startsWith('<@') && args[0].endsWith('>'))
+        {
+            const mentioned_user_id = args[0].replace(/[<@!>]/g, '');
+            const mentioned_user = await db_manager.getUser(mentioned_user_id, guild_id);
+
+            if(mentioned_user)
+            {
+                const stats = await db_manager.getUserStats(mentioned_user_id, guild_id);
+                return message.reply({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [MessageTemplates.userStatsMessage(mentioned_user, stats)]
+                });
+            }
+            else
+            {
+                return message.reply({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [MessageTemplates.errorMessage(`User not found.`)]
+                });
+            }
+        }
     }
 
     return message.reply({
