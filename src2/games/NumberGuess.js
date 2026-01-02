@@ -12,7 +12,7 @@ export class NumberGuess extends Game
         this.min_number = 1;
     }
 
-    async play(user, message, bet_amount)
+    async play(user, message, bet_amount, item_used)
     {
         const user_id = message.author.id;
         const guild_id = message.guild.id;

@@ -87,7 +87,7 @@ class CommandManager
                 {
                     execute: handleUse,
                     description: 'Use an item from your inventory',
-                    usage: '^use <item_name>'
+                    usage: '^use <item_key>'
                 }
             }
         };

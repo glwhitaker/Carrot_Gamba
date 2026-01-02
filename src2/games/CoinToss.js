@@ -45,7 +45,7 @@ export class CoinToss extends Game
             ]
         });
 
-        const res = {result: result, payout: payout};
+        const res = {result: result, payout: payout, message: game_message};
         
         return res;
     }

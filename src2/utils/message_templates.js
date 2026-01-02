@@ -225,7 +225,6 @@ export class MessageTemplates
         const header = new TextDisplayBuilder().setContent(`# Coin Toss`);
         const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(amount)}** 🥕`);
         const coin = new TextDisplayBuilder().setContent(`# ═══════    ${frame ? frame : '🪙'}    ═══════`);
-        const result_placeholder = new TextDisplayBuilder().setContent(`### Result:  ...`);
 
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.GOLD)
@@ -234,21 +233,18 @@ export class MessageTemplates
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(coin)
         .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(result_placeholder)
-        .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
         return container;
     }
 
-    static coinTossResultMessage(username, bet_amount, result, post_game_items)
+    static coinTossResultMessage(username, bet_amount, result)
     {
         const won = result === 'win';
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# ${won ? 'You Win!' : 'You Lose!'}`);
         const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(bet_amount)}** 🥕`);
         const coin = new TextDisplayBuilder().setContent(`#  ═══════    🪙    ═══════`);
-        const r = new TextDisplayBuilder().setContent(`### Result: ${won ? ' + '+this.formatNumber(bet_amount) : ' - '+this.formatNumber(bet_amount)} 🥕`);
 
         const container = new ContainerBuilder()
         .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR)
@@ -257,23 +253,7 @@ export class MessageTemplates
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(coin)
         .addSeparatorComponents(spacer)
-        .addTextDisplayComponents(r)
-
-        let item_list = "";
-        if(post_game_items && post_game_items.length > 0)
-        {
-            for(const item of post_game_items)
-            {
-                const full_item = item_manager.getItem(item.key);
-                item_list += `\n${full_item.icon} ${full_item.name} x${item.quantity}`;
-            }
-            const item_text = new TextDisplayBuilder().setContent(`### Items Available:\n\`\`\`${item_list}\`\`\``);
-            container.addSeparatorComponents(spacer);
-            container.addTextDisplayComponents(item_text);
-        }
-        
-
-        container.addTextDisplayComponents(this.getStandardFooter());
+        .addTextDisplayComponents(this.getStandardFooter());
 
         return container;
     }
@@ -287,7 +267,7 @@ export class MessageTemplates
         let rewards_string = "";
         for(const reward of rewards)
         {
-            rewards_string += `\n+ ${reward.amount} ${reward.key === 'carrots' ? '🥕' : item_manager.getItem(reward.key).name}`;
+            rewards_string += `\n+ ${this.formatNumber(reward.amount)} ${reward.key === 'carrots' ? '🥕' : item_manager.getItem(reward.key).name}`;
         }
 
         const r_balance = new TextDisplayBuilder().setContent(`### Rewards\n\`\`\`${rewards_string}\`\`\``);
@@ -407,5 +387,40 @@ export class MessageTemplates
         .addTextDisplayComponents(this.getStandardFooter());
 
         return container;
+    }
+
+    static appendGameResult(message, game_name, bet_amount, result, payout, result_array)
+    {
+        const container = message.components[0];
+        // remove existing footer (last component of array)
+        container.components.pop();
+
+        let cont_obj = new ContainerBuilder(container.toJSON());
+
+        const won = result === 'win';
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('## Result:');
+
+        // build result calculation
+        const left_pad = 18;
+        const right_pad = 18;
+        const rowTemplate = (name, value) => `${name.padEnd(left_pad)}${value.padStart(right_pad)}`;
+        let result_calc = rowTemplate('Base Payout', `${won ? '+ ' : '- '}${this.formatNumber(bet_amount)} 🥕`);
+        for(const step of result_array)
+        {
+            result_calc += `\n${rowTemplate(step.label, step.calc + ' 🥕')}`;
+        }
+        result_calc += `\n${'-'.repeat(left_pad + right_pad)}\n`;
+        result_calc += rowTemplate('Final Payout', `${won ? '+ ' : '- '}${this.formatNumber(Math.abs(payout))} 🥕`);
+        let result_string = `\`\`\`ansi\n${result_calc}\n\`\`\``;
+        const result_field = new TextDisplayBuilder().setContent(result_string);
+        
+        cont_obj
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(result_field)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return cont_obj;
     }
 }

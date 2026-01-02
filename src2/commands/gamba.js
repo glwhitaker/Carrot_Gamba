@@ -63,7 +63,25 @@ export async function handleGamba(args, message, usage)
         
         const result = await game.play(user, message, bet_amount);
 
-        const final_result = await applyItemEffects(user, message, bet_amount, result, game);
+        // build result modification array to show final result message
+        let result_array = [];
+        const final_result = await applyItemEffects(user, message, bet_amount, result, game, result_array);
+
+        // timeout for dramatic effect
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // send result message
+        final_result.message.edit({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.appendGameResult(
+                final_result.message,
+                game.name,
+                bet_amount,
+                final_result.result,
+                final_result.payout,
+                result_array
+            )]
+        });
 
         // wait for final result from item effects to update stats and balance
         await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
@@ -91,28 +109,51 @@ export async function handleGamba(args, message, usage)
     }
 }
 
-async function applyItemEffects(user, message, bet_amount, result, game)
+async function applyItemEffects(user, message, bet_amount, result, game, result_array)
 {
     // placeholder for item effects application
     let modified_result = result;
-    // loop through user's active items and apply effects
     const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
 
-    for(const item of active_items)
+    // first check for second chance token
+    if(active_items['second_chance_token'] && result.result === 'loss')
     {
-        if(item.key === 'second_chance_token' && result.result === 'loss')
+        // give user a second chance
+        const second_chance_result = await game.play(user, message, bet_amount, 'second_chance_token');
+        modified_result = second_chance_result;
+
+        // consume item
+        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'second_chance_token', 1);
+    }
+
+    if(active_items['loss_cushion'] && modified_result.result === 'loss')
+    {
+        // consume item
+        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'loss_cushion', 1);
+
+        modified_result.payout = modified_result.payout * 0.5;
+        result_array.push({label: 'Loss Cushion', calc: 'x 0.5'})
+    }
+
+    // then apply win modifiers
+    if(active_items['jackpot_juice'] && modified_result.result === 'win')
+    {
+        modified_result.payout = modified_result.payout * 2;
+        // consume item
+        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'jackpot_juice', 1);
+        result_array.push({label: 'Jackpot Juice', calc: 'x 2'})
+    }
+
+    if(active_items['carrot_surge'])
+    {
+        // if win add 10% to payout
+        if(modified_result.result === 'win')
         {
-            // item used message
-            await message.reply({
-                flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.itemUsedMessage(user, item.key)]
-            });
-            // give user a second chance
-            const second_chance_result = await game.play(user, message, bet_amount, item.key);
-            modified_result = second_chance_result;
-            // remove item from active items
-            await item_manager.consumeItemForUser(user.user_id, user.guild_id, item.key, 1);
+            modified_result.payout = Math.floor(modified_result.payout * 1.1);
+            result_array.push({label: `Carrot Surge (${active_items['carrot_surge']-1})`, calc: '+ 10%'})
         }
+        // consume regardless of win/loss
+        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'carrot_surge', 1);
     }
 
     return modified_result;

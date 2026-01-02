@@ -35,6 +35,7 @@ class ItemManager
                 "desc": "Lasts for 5 games. If you win any of them, you earn +10% carrots on top of your winnings.",
                 "icon": "⚡",
                 "price": 7000,
+                "max_uses": 5
             },
             "number_oracle": {
                 "key": "number_oracle",
@@ -70,7 +71,7 @@ class ItemManager
 
     async getActiveItemsForUser(user_id, guild_id)
     {
-        return this.current_items_activated[`${guild_id}-${user_id}`] || [];
+        return this.current_items_activated[`${guild_id}-${user_id}`] || {};
     }
 
     async consumeItemForUser(user_id, guild_id, item_key, quantity)
@@ -79,13 +80,16 @@ class ItemManager
             quantity = 1;
 
         // remove item from active items
-        if(this.current_items_activated[`${guild_id}-${user_id}`])
+        if(this.current_items_activated[`${guild_id}-${user_id}`][item_key])
         {
-            this.current_items_activated[`${guild_id}-${user_id}`] = this.current_items_activated[`${guild_id}-${user_id}`].filter(i => i.key !== item_key);
+            this.current_items_activated[`${guild_id}-${user_id}`][item_key] -= quantity;
+            if(this.current_items_activated[`${guild_id}-${user_id}`][item_key] <= 0)
+            {
+                delete this.current_items_activated[`${guild_id}-${user_id}`][item_key];
+                // remove item from user's inventory
+                await db_manager.removeItemFromUserInventory(user_id, guild_id, item_key, quantity);
+            }
         }
-
-        // remove item from user's inventory
-        await db_manager.removeItemFromUserInventory(user_id, guild_id, item_key, quantity);
     }
 }
 

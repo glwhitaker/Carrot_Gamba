@@ -48,7 +48,7 @@ export async function handleUse(args, message, usage)
 
         // first see if item is already active for user
         const active_items = await item_manager.getActiveItemsForUser(user_id, guild_id);
-        if(active_items.find(i => i.key === item_key))
+        if(active_items[item_key])
         {
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
@@ -58,11 +58,9 @@ export async function handleUse(args, message, usage)
 
         // add item effect to current activated items for this user
         if(!item_manager.current_items_activated[`${guild_id}-${user_id}`])
-            item_manager.current_items_activated[`${guild_id}-${user_id}`] = [];
+            item_manager.current_items_activated[`${guild_id}-${user_id}`] = {};
 
-        item_manager.current_items_activated[`${guild_id}-${user_id}`].push(item);
-
-        // consume item from user's inventory
+        item_manager.current_items_activated[`${guild_id}-${user_id}`][item_key] = item_manager.getItem(item_key).max_uses || 1;
 
         return message.reply({
             flags: MessageFlags.IsComponentsV2,
