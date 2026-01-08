@@ -12,7 +12,8 @@ const config =
     "WIN_MULTIPLIER": 1.2,
     "LOSS_MULTIPLIER": 0.8,
     "BASE_REQ_XP": 100,
-    "XP_EXPONENT": 1.2
+    "XP_EXPONENT": 1.2,
+    "MAX_LEVEL": 100
 };
 
 export default config;

@@ -87,17 +87,19 @@ export async function handleGamba(args, message, usage)
         await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);
         await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
 
-        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, bet_amount, final_result);
+        const result_type = final_result.result;
+        const xp = xp_manager.calculateXP(user, bet_amount, result_type);
+        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
         // send user message instead of reply to message
         if(lvl_up)
         {
-            const user = await db_manager.getUser(user_id, guild_id);
             const rewards = xp_manager.getLevelRewards(user.progression.level);
-            await xp_manager.applyLevelRewards(user, user.progression.level);
-            return message.channel.send({
+            message.channel.send({
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.levelUpMessage(user, username, rewards)]
             });
+            await xp_manager.applyLevelRewards(user, user.progression.level);
+            return;
         }
     }
     else

@@ -420,19 +420,17 @@ class DBManager
         }
     }
 
-    async updateUserLevel(user_id, guild_id, bet_amount, result)
+    async updateUserLevel(user_id, guild_id, xp)
     {
         const user = await this.getUser(user_id, guild_id);
-        const result_type = result.result;
-
-        const xp = xp_manager.calculateXP(user, bet_amount, result_type);
-
+        
         // update user progression
-        user.progression.xp += xp;
+        if(user.progression.level < config.MAX_LEVEL)
+            user.progression.xp += xp;
 
         // check for level up
         let leveled_up = false;
-        while(user.progression.xp >= xp_manager.requiredXPForLevel(user.progression.level))
+        while(user.progression.xp >= xp_manager.requiredXPForLevel(user.progression.level) && user.progression.level < config.MAX_LEVEL)
         {
             user.progression.xp -= xp_manager.requiredXPForLevel(user.progression.level);
             user.progression.level += 1;

@@ -1,6 +1,7 @@
 import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize } from 'discord.js';
 import { item_manager } from '../items/item_manager.js';
 import { xp_manager } from '../user/xp_manager.js';
+import { config } from 'dotenv';
 // colors for different types of messages
 const COLORS = {
     PRIMARY: 0x90D5FF,
@@ -223,7 +224,7 @@ export class MessageTemplates
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# Coin Toss`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(amount)}** 🥕`);
         const coin = new TextDisplayBuilder().setContent(`# ═══════    ${frame ? frame : '🪙'}    ═══════`);
 
         const container = new ContainerBuilder()
@@ -243,7 +244,7 @@ export class MessageTemplates
         const won = result === 'win';
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# ${won ? 'You Win!' : 'You Lose!'}`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** tossed a coin with a bet of **${this.formatNumber(bet_amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
         const coin = new TextDisplayBuilder().setContent(`#  ═══════    🪙    ═══════`);
 
         const container = new ContainerBuilder()
@@ -288,17 +289,17 @@ export class MessageTemplates
         // build xp bar from level and required xp
         const level = user.progression.level;
         const current_xp = user.progression.xp;
-
         const required_xp = xp_manager.requiredXPForLevel(level);
 
-        const bar_length = 20;
+        const bar_length = 27;
         const filled_length = Math.floor((current_xp / required_xp) * bar_length);
         const empty_length = bar_length - filled_length;
 
         const filled_bar = '▰'.repeat(filled_length);
         const empty_bar = '▱'.repeat(empty_length);
+        const xp_string = level < config.MAX_LEVEL ? `${this.formatNumber(current_xp)} / ${this.formatNumber(required_xp)} XP` : 'MAX LEVEL';
 
-        const xp_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n\u001b[1mLEVEL ${level}\u001b[0m\n${filled_bar}${empty_bar} ${this.formatNumber(current_xp)} / ${this.formatNumber(required_xp)} XP\`\`\``);
+        const xp_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n\u001b[1mLEVEL ${level}\u001b[0m\n${filled_bar}${empty_bar}\n${xp_string}\`\`\``);
 
         return xp_field;
 
@@ -347,9 +348,21 @@ export class MessageTemplates
         // get user xp bar
         const xp_bar = this.userExperienceBar(user);
 
-        // column width for table
-        const stat_name_width = 37;
-        const stat_value_width = 15;
+        // calc widths based on longest stat name and value, should add up to 52
+        const total = 52;
+        // get longest value
+        const stat_value_width = Math.max(
+            this.formatNumber(stats.highest_balance).length + 3,
+            this.formatNumber(stats.total_money_won).length + 3,
+            this.formatNumber(stats.total_money_lost).length + 3,
+            this.formatNumber(stats.highest_single_win).length + 3,
+            this.formatNumber(stats.highest_single_loss).length + 3,
+            this.formatNumber(stats.total_games_played).length + 3,
+            this.formatNumber(stats.total_games_won).length + 3,
+            this.formatNumber(stats.total_games_lost).length + 3,
+            ((stats.total_games_won / Math.max(stats.total_games_played, 1)) * 100).toFixed(2).length + 4
+        );
+        const stat_name_width = total - stat_value_width;
 
         const rowTemplate = (name, value) => `${name.padEnd(stat_name_width)}${value.padStart(stat_value_width)}`;
 
@@ -429,7 +442,7 @@ export class MessageTemplates
         const multiplier = max_number;
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# Number Guess`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** started Number Guess game with a bet\nof **${this.formatNumber(bet_amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
 
         // number of action rows needed (can have max 5 buttons per row)
         const total_numbers = max_number - min_number + 1;

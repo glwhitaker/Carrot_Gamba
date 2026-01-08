@@ -22,6 +22,17 @@ export async function handleStats(args, message, usage)
                 components: [MessageTemplates.userStatsMessage(user, stats)]
             });
         }
+        else if(args.length === 2 && args[0].toLowerCase() === 'games')
+        {
+
+        }
+        else
+        {
+            return message.reply({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [MessageTemplates.errorMessage(`Usage: \`${usage}\``)]
+                });
+        }
 
         // show stats for another user
         if(args.length === 1 && args[0].startsWith('<@') && args[0].endsWith('>'))
@@ -49,6 +60,6 @@ export async function handleStats(args, message, usage)
 
     return message.reply({
         flags: MessageFlags.IsComponentsV2,
-        components: [MessageTemplates.errorMessage(`Usage: \`${usage}\``)]
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
     });
 }
