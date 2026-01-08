@@ -16,7 +16,8 @@ export class CoinToss extends Game
         const guild_id = message.guild.id;
         const username = message.author.username;
 
-        const win = Math.random() < 0.5;
+        //const win = Math.random() < 0.5;
+        const win = 1;
         const payout = win ? bet_amount : -bet_amount;
         const result = win ? 'win' : 'loss';
 

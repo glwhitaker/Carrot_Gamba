@@ -423,4 +423,53 @@ export class MessageTemplates
 
         return cont_obj;
     }
+
+    static numberGuessMessage(username, bet_amount, min_number, max_number, hinted_numbers)
+    {
+        const multiplier = max_number;
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# Number Guess`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** started Number Guess game with a bet\nof **${this.formatNumber(bet_amount)}** 🥕`);
+
+        // number of action rows needed (can have max 5 buttons per row)
+        const total_numbers = max_number - min_number + 1;
+        const buttons_per_row = 5;
+        const total_rows = Math.ceil(total_numbers / buttons_per_row);
+        
+        let action_rows = [];
+        for(let row = 0; row < total_rows; row++)
+        {
+            const action_row = new ActionRowBuilder();
+            for(let col = 0; col < buttons_per_row; col++)
+            {
+                const number = min_number + row * buttons_per_row + col;
+                if(number > max_number) break;
+
+                const button = new ButtonBuilder()
+                .setCustomId(`numberguess_${number}`)
+                .setLabel(number.toString())
+                
+                if(hinted_numbers.includes(number))
+                {
+                    button.setStyle(1);
+                }
+                else
+                    button.setStyle(2);
+
+                action_row.addComponents(button);
+            }
+            action_rows.push(action_row);
+        }
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addActionRowComponents(...action_rows)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
 }
