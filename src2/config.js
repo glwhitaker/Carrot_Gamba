@@ -17,7 +17,12 @@ const config =
     "MESSAGE":
     {
         "MIN_LENGTH": 5,
-        "COOLDOWN_MS": 5000,
+        "COOLDOWN_MS": 60000,
+        "POINTS": 50
+    },
+    "VOICE":
+    {
+        "REWARD_INTERVAL_MS": 60000,
         "POINTS": 20
     }
 };

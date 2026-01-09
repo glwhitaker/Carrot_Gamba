@@ -366,6 +366,11 @@ export class MessageTemplates
 
         const rowTemplate = (name, value) => `${name.padEnd(stat_name_width)}${value.padStart(stat_value_width)}`;
 
+        const passive_mult_in_percent = '+' + ((user.progression.passive_multiplier - 1) * 100).toFixed(0) + '%';
+        const user_table = [
+            rowTemplate('\u001b[1mPassive Carrot Multiplier:\u001b[0m', passive_mult_in_percent)
+        ].join('\n');
+
         const stats_table = [
             rowTemplate('\u001b[1mHighest Balance:\u001b[0m', this.formatNumber(stats.highest_balance) + ' 🥕'),
             rowTemplate('\u001b[1mTotal Carrots Won:\u001b[0m', this.formatNumber(stats.total_money_won) + ' 🥕'),
@@ -382,9 +387,11 @@ export class MessageTemplates
             rowTemplate('\u001b[1mWin Rate:\u001b[0m', ((stats.total_games_won / Math.max(stats.total_games_played, 1)) * 100).toFixed(2) + '%')
         ].join('\n');
 
+        const user_field = `\`\`\`ansi\n${user_table}\`\`\``;
         const stats_field = `\`\`\`ansi\n${stats_table}\`\`\``;
         const games_field = `\`\`\`ansi\n${games_table}\`\`\``;
 
+        const user_text = new TextDisplayBuilder().setContent(user_field);
         const stats_text = new TextDisplayBuilder().setContent(stats_field);
         const games_text = new TextDisplayBuilder().setContent(games_field);
 
@@ -393,6 +400,7 @@ export class MessageTemplates
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(
             xp_bar,
+            user_text,
             stats_text,
             games_text
         )

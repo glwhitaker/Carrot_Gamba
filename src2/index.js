@@ -4,7 +4,7 @@ import config from './config.js';
 import { db_manager } from './db/db_manager.js';
 import { command_manager } from './commands/command_manager.js';
 import { activity_tracker } from './user/activity_tracker.js';
-import { Client, GatewayIntentBits, ChannelType, ActivityType } from 'discord.js';
+import { Client, GatewayIntentBits, ActivityType } from 'discord.js';
 
 dotenv.config();
 
@@ -78,21 +78,8 @@ client.once('clientReady', () =>
             }
         ]
     });
-
-    // check guilds for active voice channels and start a voice session
-    client.guilds.cache.forEach(guild =>
-    {
-        guild.channels.cache.forEach(channel =>
-        {
-            // is voice channel and currently has members
-            if(channel.type === ChannelType.GuildVoice && channel.members.size > 0)
-            {
-                console.log(`[System] Active voice channel found in guild ${guild.name}: ${channel.name}`);
-            }
-        });
-    });
     
-    // initialize activity tracker
+    // start activity tracker
     activity_tracker.init(client);
 
     // interval to sync cache with database
