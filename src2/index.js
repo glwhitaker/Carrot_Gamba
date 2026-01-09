@@ -3,6 +3,7 @@ import config from './config.js';
 
 import { db_manager } from './db/db_manager.js';
 import { command_manager } from './commands/command_manager.js';
+import { activity_tracker } from './user/activity_tracker.js';
 import { Client, GatewayIntentBits, ChannelType, ActivityType } from 'discord.js';
 
 dotenv.config();
@@ -46,11 +47,14 @@ async function shutdown()
     {
         // update all users before shutdown
         await db_manager.updateAllUsers();
-        console.log('[System] Database synced. Closing Discord client...');
+        console.log('[Database] Database synced.');
+
+        await db_manager.close();
+        console.log('[Database] Database connection closed.');
 
         await client.destroy();
-
         console.log('[System] Discord client closed. Goodbye!');
+        
         process.exit(0);
     }
     catch(error)
@@ -87,6 +91,9 @@ client.once('clientReady', () =>
             }
         });
     });
+    
+    // initialize activity tracker
+    activity_tracker.init(client);
 
     // interval to sync cache with database
     setInterval(async () =>
@@ -95,7 +102,7 @@ client.once('clientReady', () =>
     }, 30000);
 });
 
-// listener for messages
+// listener for commands
 client.on('messageCreate', async (message) =>
 {
     if(message.author.bot) return;

@@ -1,7 +1,7 @@
 import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize } from 'discord.js';
 import { item_manager } from '../items/item_manager.js';
 import { xp_manager } from '../user/xp_manager.js';
-import { config } from 'dotenv';
+import config from '../config.js';
 // colors for different types of messages
 const COLORS = {
     PRIMARY: 0x90D5FF,

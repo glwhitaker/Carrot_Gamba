@@ -14,6 +14,12 @@ class DBManager
         this.user_cache = new Map();
     }
 
+    async close()
+    {
+        if(this.db)
+            await this.db.close();
+    }
+
     async init()
     {
         this.db = await open(
@@ -231,14 +237,16 @@ class DBManager
                 guild_id,
                 xp,
                 level,
-                streak
-            ) VALUES (?, ?, ?, ?, ?)`,
+                streak,
+                passive_multiplier
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 user_id,
                 guild_id,
                 0,
                 1,
-                0
+                0,
+                1.0
             ]
         );
         // insert into player_stats
@@ -286,6 +294,7 @@ class DBManager
         user.progression.xp = 0;
         user.progression.level = 1;
         user.progression.streak = 0;
+        user.progression.passive_multiplier = 1.0;
 
         this.user_cache.set(key, user);
     }
@@ -353,13 +362,15 @@ class DBManager
             SET
                 xp = ?,
                 level = ?,
-                streak = ?
+                streak = ?,
+                passive_multiplier = ?
             WHERE user_id = ?
             AND guild_id = ?`,
             [
                 user.progression.xp,
                 user.progression.level,
                 user.progression.streak,
+                user.progression.passive_multiplier,
                 user_id,
                 guild_id
             ]
@@ -405,6 +416,15 @@ class DBManager
         if(user)
         {
             user.last_weekly_claim = timestamp;
+            user.is_dirty = true;
+        }
+    }
+
+    updateLastMessageDate(user, timestamp)
+    {
+        if(user)
+        {
+            user.last_message_date = timestamp;
             user.is_dirty = true;
         }
     }

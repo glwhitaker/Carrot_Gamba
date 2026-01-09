@@ -13,7 +13,13 @@ const config =
     "LOSS_MULTIPLIER": 0.8,
     "BASE_REQ_XP": 100,
     "XP_EXPONENT": 1.2,
-    "MAX_LEVEL": 100
+    "MAX_LEVEL": 100,
+    "MESSAGE":
+    {
+        "MIN_LENGTH": 5,
+        "COOLDOWN_MS": 5000,
+        "POINTS": 20
+    }
 };
 
 export default config;
