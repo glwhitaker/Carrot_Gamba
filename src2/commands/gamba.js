@@ -78,6 +78,7 @@ export async function handleGamba(args, message, usage)
                 game.name,
                 bet_amount,
                 final_result.result,
+                final_result.base_payout,
                 final_result.payout,
                 result_array
             )]

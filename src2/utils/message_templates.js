@@ -410,7 +410,7 @@ export class MessageTemplates
         return container;
     }
 
-    static appendGameResult(message, game_name, bet_amount, result, payout, result_array)
+    static appendGameResult(message, game_name, bet_amount, result, base_payout, payout, result_array)
     {
         const container = message.components[0];
         // remove existing footer (last component of array)
@@ -426,7 +426,7 @@ export class MessageTemplates
         const left_pad = 18;
         const right_pad = 18;
         const rowTemplate = (name, value) => `${name.padEnd(left_pad)}${value.padStart(right_pad)}`;
-        let result_calc = rowTemplate('Base Payout', `${won ? '+ ' : '- '}${this.formatNumber(bet_amount)} 🥕`);
+        let result_calc = rowTemplate('Base Payout', `${won ? `+ ${this.formatNumber(base_payout)}` : `- ${this.formatNumber(bet_amount)}`} 🥕`);
         for(const step of result_array)
         {
             result_calc += `\n${rowTemplate(step.label, step.calc + ' 🥕')}`;
@@ -445,7 +445,7 @@ export class MessageTemplates
         return cont_obj;
     }
 
-    static numberGuessMessage(username, bet_amount, min_number, max_number, hinted_numbers)
+    static numberGuessMessage(username, bet_amount, min_number, max_number, hinted_numbers, disabled)
     {
         const multiplier = max_number;
         const spacer = new SeparatorBuilder().setDivider(false);
@@ -469,7 +469,8 @@ export class MessageTemplates
                 const button = new ButtonBuilder()
                 .setCustomId(`numberguess_${number}`)
                 .setLabel(number.toString())
-                
+                .setDisabled(disabled);
+
                 if(hinted_numbers.includes(number))
                 {
                     button.setStyle(1);
@@ -484,6 +485,56 @@ export class MessageTemplates
 
         const container = new ContainerBuilder()
         .setAccentColor(COLORS.GOLD)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addActionRowComponents(...action_rows)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static numberGuessResultMessage(username, bet_amount, min_number, max_number, result)
+    {
+        const won = result.result === 'win';
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# ${won ? 'You Win!' : 'You Lose!'}`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+
+        // number of action rows needed (can have max 5 buttons per row)
+        const total_numbers = max_number - min_number + 1;
+        const buttons_per_row = 5;
+        const total_rows = Math.ceil(total_numbers / buttons_per_row);
+        
+        let action_rows = [];
+        for(let row = 0; row < total_rows; row++)
+        {
+            const action_row = new ActionRowBuilder();
+            for(let col = 0; col < buttons_per_row; col++)
+            {
+                const number = min_number + row * buttons_per_row + col;
+                if(number > max_number) break;
+
+                const button = new ButtonBuilder()
+                .setCustomId(`numberguess_${number}`)
+                .setLabel(number.toString())
+                .setDisabled(true)
+                .setStyle(2);
+
+                if(number === result.guessed_number)
+                    button.setStyle(4);
+
+                if(number === result.winning_number)
+                    button.setStyle(3);
+
+                action_row.addComponents(button);
+            }
+            action_rows.push(action_row);
+        }
+
+        const container = new ContainerBuilder()
+        .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR)
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)

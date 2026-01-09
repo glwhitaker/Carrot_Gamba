@@ -10,15 +10,13 @@ export class CoinToss extends Game
         super('cointoss');
     }
 
-    async play(user, message, bet_amount, item_used)
+    async play(user, message, bet_amount)
     {
-        const user_id = message.author.id;
-        const guild_id = message.guild.id;
         const username = message.author.username;
 
-        //const win = Math.random() < 0.5;
-        const win = 1;
+        const win = Math.random() < 0.5;
         const payout = win ? bet_amount : -bet_amount;
+        const base_payout = bet_amount;
         const result = win ? 'win' : 'loss';
 
         const animation_frames = ['💫', '🪙', '💫', '🪙'];
@@ -46,7 +44,7 @@ export class CoinToss extends Game
             ]
         });
 
-        const res = {result: result, payout: payout, message: game_message};
+        const res = {result: result, payout: payout, message: game_message, base_payout: base_payout};
         
         return res;
     }

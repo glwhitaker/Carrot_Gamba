@@ -151,7 +151,7 @@ class ActivityTracker
 
     async awardVoicePoints()
     {
-        this.activeVoiceUsers.forEach(async (channel_id, key) =>
+        this.activeVoiceUsers.forEach(async (status, key) =>
         {
             const [guild_id, user_id] = key.split('-');
 
