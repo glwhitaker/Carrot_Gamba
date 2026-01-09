@@ -1,25 +1,54 @@
 # Carrot Gamba Bot
 
-A Discord economy and gambling system built with Node.js, Discord.js, and SQLite.
-
-## What It Does
-
-Carrot Gamba is a fun Discord bot that adds a virtual economy to your server. Users earn carrots (the virtual currency) by chatting, participating in voice channels, and claiming daily/weekly rewards. They can then use these carrots to play various games of chance.
+A feature-rich Discord economy and gambling bot focused on progression, rewards, and fair gameplay.
 
 ## Overview
 
-- **Virtual Economy**: Users earn carrots through regular activity
-- **Gambling Games**:
-  - **Blackjack**: Play against the dealer with standard rules
-  - **Coin Toss**: 50/50 chance to double your bet
-  - **Number Guess**: Guess a number between 1-10 for a chance to win 10x your bet
-- **Statistics**: Track wins, losses, and overall performance
-- **Leaderboard**: See who has the most carrots in your server
+Carrot Gamba adds a virtual economy to your Discord server where users earn **carrots** through participation and risk them in games of chance. Beyond basic gambling, the bot emphasizes **long-term progression**, **activity rewards**, and **strategic bonuses** that keep users engaged over time.
 
-## Key Features
+The system is designed to be fun, transparent, and resistant to abuse, making it suitable for active communities rather than short-lived novelty use.
 
-- Economy system with activity-based rewards
-- Statistics tracking and data visualization
-- Multiple interactive games with fair RNG implementation
-- Resource management and anti-exploitation measures
-- Responsive and user-friendly interface
+## Core Features
+
+### Virtual Economy
+- Earn carrots through:
+  - Chat participation (with cooldowns and validation)
+  - Voice channel activity
+  - Daily and weekly rewards
+- Server-specific balances and stats
+- Anti-exploitation safeguards to prevent farming and abuse
+
+### Gambling Games
+- **Blackjack** — Play against the dealer using standard rules
+- **Coin Toss** — High-risk 50/50 betting
+- **Number Guess** — Guess 1–10 for large multipliers
+
+### Progression & Leveling
+- XP-based leveling system with scaling requirements
+- Passive multipliers unlocked through progression
+- Long-term incentives that reward consistent activity, not just luck
+
+### Items & Boosts
+- Temporary and multi-game items that modify gameplay
+  - Win bonuses
+  - Loss mitigation
+  - Passive reward multipliers
+- Effects persist across multiple games where applicable
+- Clear, readable reward feedback after each game
+
+### Stats & Leaderboards
+- Track:
+  - Games played, wins, losses
+  - Biggest wins and losses
+  - Balance milestones
+- Server leaderboards to highlight top players
+
+## Design Goals
+
+- Simple commands, clear feedback
+- Fair randomness and transparent outcomes
+- Systems that scale with active communities
+
+---
+
+Carrot Gamba is built to feel less like a gimmick and more like a persistent game layered on top of your Discord server.
