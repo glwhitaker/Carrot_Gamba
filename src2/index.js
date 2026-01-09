@@ -79,8 +79,8 @@ client.once('clientReady', () =>
         ]
     });
     
-    // start activity tracker
-    activity_tracker.init(client);
+    // set activity tracker
+    activity_tracker.getInstance().init(client);
 
     // interval to sync cache with database
     setInterval(async () =>

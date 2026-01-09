@@ -7,13 +7,24 @@ class ActivityTracker
 {
     constructor()
     {
+        if(!ActivityTracker.instance)
+        {
+            ActivityTracker.instance = this;
+        }
         this.activeVoiceUsers = new Map();
+        this.client = null;
+    }
+
+    getInstance()
+    {
+        return ActivityTracker.instance;
     }
 
     init(client)
     {
+        this.client = client;
         // listener for messages for points
-        client.on('messageCreate', async (message) =>
+        this.client.on('messageCreate', async (message) =>
         {
             if(message.author.bot) return;
 
@@ -27,7 +38,7 @@ class ActivityTracker
             if(user)
             {
                 // track message activity
-                if(activity_tracker.isValidMessage(message.content) && activity_tracker.canEarnMessagePoints(user))
+                if(this.isValidMessage(message.content) && this.canEarnMessagePoints(user))
                 {
                     const carrots = config.MESSAGE.POINTS * user.progression.passive_multiplier;
                     await db_manager.updateUserBalance(user_id, guild_id, carrots);
@@ -36,11 +47,10 @@ class ActivityTracker
         });
 
         // listener for voice state updates
-        client.on('voiceStateUpdate', async (old_state, new_state) =>
+        this.client.on('voiceStateUpdate', async (old_state, new_state) =>
         {
             const user_id = new_state.id;
             const guild_id = new_state.guild.id;
-            const key = `${guild_id}-${user_id}`;
 
             // check if user is enrolled
             const user = await db_manager.getUser(user_id, guild_id);
@@ -48,77 +58,74 @@ class ActivityTracker
             {
                 // left voice entirely
                 if(old_state.channelId && !new_state.channelId)
-                {
-                    if(this.activeVoiceUsers.has(key))
-                    {
-                        this.activeVoiceUsers.delete(key);
-                        console.log(`[ActivityTracker] Ended voice session for: ${new_state.member.user.tag}`);
-                    }
-                }
+                    this.endVoiceForUser(user);
                 // joined voice channel
                 else if(!old_state.channelId && new_state.channelId)
                 {
                     if(!new_state.mute && !new_state.deaf && new_state.member?.presence?.status !== 'offline')
-                    {
-                        this.activeVoiceUsers.set(key, new_state.channelId);
-                        console.log(`[ActivityTracker] Started voice session for: ${new_state.member.user.tag}`);
-                    }
+                        this.startVoiceForUser(user);
                 }
                 // state changed within voice
                 else if(new_state.mute || new_state.deaf || new_state.member?.presence?.status === 'offline')
-                {
-                    if(this.activeVoiceUsers.has(key))
-                    {
-                        this.activeVoiceUsers.delete(key);
-                        console.log(`[ActivityTracker] Ended voice session for: ${new_state.member.user.tag}`);
-                    }
-                }
+                    this.endVoiceForUser(user);
                 else
-                {
-                    this.activeVoiceUsers.set(key, new_state.channelId);
-                    console.log(`[ActivityTracker] Started voice session for: ${new_state.member.user.tag}`);
-                }
+                    this.startVoiceForUser(user);
             }
         });
 
-        this.startVoiceForActiveUsers(client);
+        this.startVoiceForActiveUsers();
 
         // interval to reward voice activity
         setInterval(() => {this.awardVoicePoints();}, config.VOICE.REWARD_INTERVAL_MS);
     }
 
-    async startVoiceForActiveUsers(client)
+    async startVoiceForActiveUsers()
     {
         // check guilds for active voice channels and start a voice session
-        client.guilds.cache.forEach(guild =>
+        this.client.guilds.cache.forEach(guild =>
         {
             guild.channels.cache.forEach(channel =>
             {
                 // is voice channel and currently has members
                 if(channel.type === ChannelType.GuildVoice && channel.members.size > 0)
                 {
-                    console.log(`[ActivityTracker] Active voice channel found in guild ${guild.name}: ${channel.name}`);
-
                     channel.members.forEach(async member =>
                     {
                         const user_id = member.id;
                         const guild_id = guild.id;
-                        const key = `${guild_id}-${user_id}`;
 
                         const user = await db_manager.getUser(user_id, guild_id);
                         if(user)
                         {
                             if(!member.voice.mute && !member.voice.deaf && member.presence?.status !== 'offline')
-                            {
-                                this.activeVoiceUsers.set(key, channel.id);
-                                console.log(`[ActivityTracker] Started voice session for: ${member.user.tag}`);
-                            }
+                                this.startVoiceForUser(user);
                         }
                     });
                 }
             });
         });
     }
+
+    startVoiceForUser(user)
+    {
+        const key = `${user.guild_id}-${user.user_id}`;
+        if(!this.activeVoiceUsers.has(key))
+        {
+            this.activeVoiceUsers.set(key, true);
+            console.log(`[ActivityTracker] Started voice session for: ${user.username}`);
+        }
+    }
+
+    endVoiceForUser(user)
+    {
+        const key = `${user.guild_id}-${user.user_id}`;
+        if(this.activeVoiceUsers.has(key))
+        {
+            this.activeVoiceUsers.delete(key);
+            console.log(`[ActivityTracker] Ended voice session for: ${user.username}`);
+        }
+    }
+
 
     isValidMessage(content)
     {

@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import config from '../config.js';
 import { xp_manager } from '../user/xp_manager.js';
+import { activity_tracker } from '../user/activity_tracker.js';
 
 // Singleton class to manage the database connection
 class DBManager
@@ -297,6 +298,9 @@ class DBManager
         user.progression.passive_multiplier = 1.0;
 
         this.user_cache.set(key, user);
+
+        // check if user is in voice chat
+        await activity_tracker.getInstance().startVoiceForActiveUsers();
     }
 
     async updateUser(user_id, guild_id)
