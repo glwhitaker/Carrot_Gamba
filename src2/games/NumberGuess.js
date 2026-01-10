@@ -77,8 +77,6 @@ export class NumberGuess extends Game
             });
         });
 
-        
-
         return result;
     }
 }

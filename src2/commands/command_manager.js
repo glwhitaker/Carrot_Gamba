@@ -7,6 +7,7 @@ import { handleDonate } from './donate.js';
 import { handleGamba } from './gamba.js';
 import { handleUse } from './use.js';
 import { handleStats } from './stats.js';
+import { handleHelp } from './help.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -21,7 +22,8 @@ class CommandManager
                 {
                     execute: handleEnroll,
                     description: 'Join the carrot economy',
-                    usage: '^enroll'
+                    usage: '^enroll',
+                    aliases: []
                 },
                 balance:
                 {
@@ -34,19 +36,22 @@ class CommandManager
                 {
                     execute: handleDaily,
                     description: 'Claim your daily reward',
-                    usage: '^daily'
+                    usage: '^daily',
+                    aliases: []
                 },
                 weekly:
                 {
                     execute: handleWeekly,
                     description: 'Claim your weekly reward',
-                    usage: '^weekly'
+                    usage: '^weekly',
+                    aliases: []
                 },
                 donate:
                 {
                     execute: handleDonate,
                     description: 'Donate carrots to another user',
-                    usage: '^donate <@user> <amount>'
+                    usage: '^donate <@user> <amount>',
+                    aliases: []
                 }
             },
             games:
@@ -55,7 +60,8 @@ class CommandManager
                 {
                     execute: handleGamba,
                     description: 'Play games to win carrots',
-                    usage: '^gamba <game> [bet amount|"max"]'
+                    usage: '^gamba <game> <bet amount|"max">',
+                    aliases: []
                 }
             },
             utility:
@@ -70,24 +76,35 @@ class CommandManager
                 
                 help:
                 {
-                    // execute: handleHelp,
+                    execute: handleHelp,
                     description: 'Show all available commands',
-                    usage: '^help [category|command]'
+                    usage: '^help [category|command]',
+                    aliases: []
                 },
                 stats:
                 {
                     execute: handleStats,
                     description: 'View gamba statistics',
-                    usage: '^stats [me|@user|games <game>]'
+                    usage: '^stats [me|@user|games <game>]',
+                    aliases: []
                 }
             },
             items:
             {
+                inventory:
+                {
+                    // execute: handleInventory,
+                    description: 'View your item inventory',
+                    usage: '^inventory, ^inv',
+                    aliases: ['inventory', 'inv']
+                },
+
                 use:
                 {
                     execute: handleUse,
                     description: 'Use an item from your inventory',
-                    usage: '^use <item_key>'
+                    usage: '^use <item_key>',
+                    aliases: []
                 }
             }
         };
@@ -98,7 +115,12 @@ class CommandManager
         return this.commands;
     }
 
-    getCommandByCategory(category)
+    getCategories()
+    {
+        return Object.keys(this.commands);
+    }
+
+    getCommandsByCategory(category)
     {
         return this.commands[category] || null;
     }
