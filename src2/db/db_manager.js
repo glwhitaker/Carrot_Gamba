@@ -180,8 +180,17 @@ class DBManager
             [user_id, guild_id]
         );
 
+        const stats = await this.db.get(`
+            SELECT *
+            FROM player_stats
+            WHERE user_id = ?
+            AND guild_id = ?
+            `,
+            [user_id, guild_id]
+        );
+
         // store in cache if found
-        if(user && progression)
+        if(user && progression && stats)
         {
             const full_user = {};
             full_user.user_id = user.user_id;
@@ -193,6 +202,8 @@ class DBManager
             full_user.last_daily_claim = user.last_daily_claim;
             full_user.last_weekly_claim = user.last_weekly_claim;
             full_user.is_dirty = false;
+
+            full_user.highest_balance = stats.highest_balance;
 
             full_user.progression = {};
             full_user.progression.xp = progression.xp;
@@ -285,6 +296,7 @@ class DBManager
         user.guild_id = guild_id;
         user.username = username;
         user.balance = config.STARTING_BALANCE;
+        user.highest_balance = config.STARTING_BALANCE;
         user.enrollment_date = current_time;
         user.last_message_date = current_time;
         user.last_daily_claim = null;
@@ -339,11 +351,11 @@ class DBManager
         await this.db.run(`
             UPDATE player_stats
             SET
-                highest_balance = MAX(highest_balance, ?)
+                highest_balance = ?
             WHERE user_id = ?
             AND guild_id = ?`,
             [
-                user.balance,
+                user.highest_balance,
                 user_id,
                 guild_id
             ]
@@ -440,6 +452,8 @@ class DBManager
         if(user)
         {
             user.balance += amount;
+            if(user.balance > user.highest_balance)
+                user.highest_balance = user.balance;
             user.is_dirty = true;
         }
     }
@@ -642,6 +656,46 @@ class DBManager
                 quantity
             ]
         );
+    }
+
+    async getLeaderboard(guild_id)
+    {
+        let board = [];
+        const lb = await this.db.all(`
+            SELECT user_id, balance
+            FROM users
+            WHERE guild_id = ?
+            ORDER BY balance DESC
+            LIMIT ?`,
+            [guild_id, config.LEADERBOARD.SIZE]
+        );
+
+        for(const entry of lb)
+        {
+            const user = await this.getUser(entry.user_id, guild_id);
+            board.push(user);
+        }
+        return board;
+    }
+
+    async getAllTimeLeaderboard(guild_id)
+    {
+        let board = [];
+        const lb = await this.db.all(`
+            SELECT user_id, highest_balance as balance
+            FROM player_stats
+            WHERE guild_id = ?
+            ORDER BY highest_balance DESC
+            LIMIT ?`,
+            [guild_id, config.LEADERBOARD.SIZE]
+        );
+
+        for(const entry of lb)
+        {
+            const user = await this.getUser(entry.user_id, guild_id);
+            board.push(user);
+        }
+        return board;
     }
 }
 

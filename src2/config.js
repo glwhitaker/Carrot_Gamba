@@ -24,6 +24,10 @@ const config =
     {
         "REWARD_INTERVAL_MS": 60000,
         "POINTS": 20
+    },
+    "LEADERBOARD":
+    {
+        "SIZE": 20
     }
 };
 

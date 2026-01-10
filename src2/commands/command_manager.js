@@ -8,6 +8,7 @@ import { handleGamba } from './gamba.js';
 import { handleUse } from './use.js';
 import { handleStats } from './stats.js';
 import { handleHelp } from './help.js';
+import { handleLeaderboard } from './leaderboard.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -68,7 +69,7 @@ class CommandManager
             {
                 leaderboard:
                 {
-                    // execute: handleLeaderboard,
+                    execute: handleLeaderboard,
                     description: 'View top players',
                     usage: '^leaderboard, ^lb',
                     aliases: ['leaderboard', 'lb']

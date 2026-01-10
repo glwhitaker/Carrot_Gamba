@@ -14,12 +14,36 @@ const COLORS = {
 };
 
 const RARITY_COLORS = {
-    COMMON: 0xAAAAAA,
-    UNCOMMON: 0x87CEEB,
-    RARE: 0x6495ED,
-    EPIC: 0xDA70D6,
-    LEGENDARY: 0xFFD700,
-    MYTHIC: 0xFF6B6B
+    COMMON:
+    {
+        HEX: 0xAAAAAA,
+        ANSI: '\u001b[0;30m'
+    },
+    UNCOMMON:
+    {
+        HEX:0x87CEEB,
+        ANSI: '\u001b[0;36m'
+    },
+    RARE:
+    {
+        HEX: 0x6495ED,
+        ANSI: '\u001b[0;34m'
+    },
+    EPIC:
+    {
+        HEX: 0xDA70D6,
+        ANSI: '\u001b[0;35m'
+    },
+    LEGENDARY:
+    {
+        HEX: 0xFFD700,
+        ANSI: '\u001b[0;33m'
+    },
+    MYTHIC:
+    {
+        HEX: 0xFF6B6B,
+        ANSI: '\u001b[0;31m'
+    }
 };
 
 export class MessageTemplates
@@ -38,17 +62,55 @@ export class MessageTemplates
     static getLevelColor(level)
     {
         const colors = [
-            RARITY_COLORS.COMMON,
-            RARITY_COLORS.UNCOMMON,
-            RARITY_COLORS.RARE,
-            RARITY_COLORS.EPIC,
-            RARITY_COLORS.LEGENDARY,
-            RARITY_COLORS.MYTHIC
+            RARITY_COLORS.COMMON.HEX,
+            RARITY_COLORS.UNCOMMON.HEX,
+            RARITY_COLORS.RARE.HEX,
+            RARITY_COLORS.EPIC.HEX,
+            RARITY_COLORS.LEGENDARY.HEX,
+            RARITY_COLORS.MYTHIC.HEX
         ];
         
-        const color_index = Math.min(
-        Math.floor((level - 1) / (100 / colors.length)), colors.length - 1);
+        const color_index = Math.min(Math.floor((level - 1) / (100 / colors.length)), colors.length - 1);
         return colors[color_index];
+    }
+
+    static colorLevelText(text, level)
+    {
+        const colors = [
+            RARITY_COLORS.COMMON.ANSI,
+            RARITY_COLORS.UNCOMMON.ANSI,
+            RARITY_COLORS.RARE.ANSI,
+            RARITY_COLORS.EPIC.ANSI,
+            RARITY_COLORS.LEGENDARY.ANSI,
+            RARITY_COLORS.MYTHIC.ANSI
+        ];
+
+        const color_index = Math.min(Math.floor((level - 1) / (100 / colors.length)), colors.length - 1);
+        const color = colors[color_index];
+        const color_string = color + text + '\u001b[0m';
+        return color_string;
+    }
+
+    static visibleLength(string)
+    {
+        const ANSI_REGEX = /\u001b\[[0-9;]*m/g;
+        return string.replace(ANSI_REGEX, '').length;
+    }
+
+    static padEndAnsi(str, targetLength)
+    {
+        const len = this.visibleLength(str);
+        if(len >= targetLength)
+            return str;
+        return str + ' '.repeat(targetLength - len);
+    }
+
+    static padStartAnsi(str, targetLength)
+    {
+        const len = this.visibleLength(str);
+        if(len >= targetLength)
+            return str;
+        return ' '.repeat(targetLength - len) + str;
     }
 
     // regular error
@@ -546,7 +608,7 @@ export class MessageTemplates
         return container;
     }
 
-    static helpMessage(user_selection, disabled)
+    static helpMessage(selection)
     {
         // list all commands by category along with description, usage, and aliases
         const spacer = new SeparatorBuilder().setDivider(false);
@@ -556,23 +618,21 @@ export class MessageTemplates
 
         const string_select = new StringSelectMenuBuilder()
         .setCustomId('help_category_select')
-        .setPlaceholder('Choose a category...')
-        .setDisabled(disabled);
+        .setPlaceholder('Choose a category...');
 
         const categories = command_manager.getCategories();
         for(const category of categories)
         {
             string_select.addOptions({
                 label: category.charAt(0).toUpperCase() + category.slice(1),
-                value: category
+                value: category,
+                default: selection === category
             });
         }
         const action_row = new ActionRowBuilder().addComponents(string_select);
 
         let command_list = '';
-        const cat_name = user_selection.charAt(0).toUpperCase() + user_selection.slice(1);
-        command_list += `\n## ${cat_name}\n`;
-        const commands = command_manager.getCommandsByCategory(user_selection);
+        const commands = command_manager.getCommandsByCategory(selection);
         for(const command in commands)
         {
             // capitalize first letter of command name
@@ -589,6 +649,59 @@ export class MessageTemplates
         .addActionRowComponents(action_row)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(commands_field)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static leaderboardMessage(boards, selection)
+    {
+        const board = boards[selection];
+
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# Leaderboard`);
+        const string_select = new StringSelectMenuBuilder()
+        .setCustomId('leaderboard_select')
+        .setPlaceholder('Choose a leaderboard...')
+        .addOptions(
+            {label: 'Current Standings', value: 'balance', default: selection === 'balance'},
+            {label: 'All-Time', value: 'highest_balance', default: selection === 'highest_balance'}
+        );
+
+        // define column widths
+        const rank_width = 6;
+        const name_width = 20;
+        const balance_width = 20;
+        const rowTemplate = (rank, name, balance) => `${this.padEndAnsi(rank, rank_width)}${this.padEndAnsi(name, name_width)}${this.padStartAnsi(balance, balance_width)}`;
+
+        const table_header = rowTemplate('RANK', 'PLAYER', 'BALANCE');
+        const separator_line = '─'.repeat(rank_width + name_width + balance_width);
+
+        let table_content = '';
+        let rank = 1;
+        for(const entry of board)
+        {
+            const rank_str = rank == 1 ? '🥇' : rank == 2 ? '🥈' : rank == 3 ? '🥉' : rank.toString();
+
+            // get only first 14 characters of username
+            const display_name = entry.username.length > 14 ? entry.username.substring(0, 14) + '...' : entry.username;
+            const level = this.colorLevelText(`Lv.${entry.progression.level}`, entry.progression.level);
+            const combined_name = `${display_name} ${level}`;
+
+            const balance = this.formatNumber(entry[selection]) + ' 🥕';
+            
+            table_content += rowTemplate(rank_str, combined_name, balance) + '\n';
+        }
+
+        const table_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n${table_header}\n${separator_line}\n${table_content}\`\`\``);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD)
+        .addTextDisplayComponents(header)
+        .addActionRowComponents(new ActionRowBuilder().addComponents(string_select))
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(table_field)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 

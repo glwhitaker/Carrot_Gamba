@@ -5,7 +5,7 @@ export async function handleHelp(args, message, usage)
 {
     const reply = await message.reply({
         flags: MessageFlags.IsComponentsV2,
-        components: [MessageTemplates.helpMessage('economy', false)]
+        components: [MessageTemplates.helpMessage('economy')]
     });
 
     const collector = reply.createMessageComponentCollector({
@@ -22,7 +22,7 @@ export async function handleHelp(args, message, usage)
 
         await interaction.editReply({
             flags: MessageFlags.IsComponentsV2,
-            components: [MessageTemplates.helpMessage(selected_category, false)]
+            components: [MessageTemplates.helpMessage(selected_category)]
         });
     });
 }
