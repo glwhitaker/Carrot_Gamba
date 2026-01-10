@@ -1,4 +1,4 @@
-import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize } from 'discord.js';
+import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder } from 'discord.js';
 import { item_manager } from '../items/item_manager.js';
 import { xp_manager } from '../user/xp_manager.js';
 import { command_manager } from '../commands/command_manager.js';
@@ -546,26 +546,38 @@ export class MessageTemplates
         return container;
     }
 
-    static helpMessage()
+    static helpMessage(user_selection, disabled)
     {
         // list all commands by category along with description, usage, and aliases
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent('# Carrot Gamba Help');
         const p = new TextDisplayBuilder().setContent('>>> List of available commands:\n`<>` = required argument, `[]` = optional argument');
 
-        let command_list = '';
+
+        const string_select = new StringSelectMenuBuilder()
+        .setCustomId('help_category_select')
+        .setPlaceholder('Choose a category...')
+        .setDisabled(disabled);
+
         const categories = command_manager.getCategories();
         for(const category of categories)
         {
-            const cat_name = category.charAt(0).toUpperCase() + category.slice(1);
-            command_list += `\n## ${cat_name}\n`;
-            const commands = command_manager.getCommandsByCategory(category);
-            for(const command in commands)
-            {
-                // capitalize first letter of command name
-                const command_name = command.charAt(0).toUpperCase() + command.slice(1);
-                command_list += `\n**${command_name}**\n> *${commands[command].description}*\n> Usage: \`${commands[command].usage}\`\n`;
-            }
+            string_select.addOptions({
+                label: category.charAt(0).toUpperCase() + category.slice(1),
+                value: category
+            });
+        }
+        const action_row = new ActionRowBuilder().addComponents(string_select);
+
+        let command_list = '';
+        const cat_name = user_selection.charAt(0).toUpperCase() + user_selection.slice(1);
+        command_list += `\n## ${cat_name}\n`;
+        const commands = command_manager.getCommandsByCategory(user_selection);
+        for(const command in commands)
+        {
+            // capitalize first letter of command name
+            const command_name = command.charAt(0).toUpperCase() + command.slice(1);
+            command_list += `\n**${command_name}**\n> *${commands[command].description}*\n> Usage: \`${commands[command].usage}\`\n`;
         }
 
         const commands_field = new TextDisplayBuilder().setContent(command_list);
@@ -574,6 +586,7 @@ export class MessageTemplates
         .setAccentColor(COLORS.PRIMARY)
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
+        .addActionRowComponents(action_row)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(commands_field)
         .addSeparatorComponents(spacer)
