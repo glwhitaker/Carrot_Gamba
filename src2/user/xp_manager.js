@@ -10,15 +10,11 @@ class XPManager
         {
             return Math.max(min, Math.min(max, num));
         }
-
         // calculate xp gain
         const risk = Math.pow(bet_amount / user.balance, 0.75);
         const magnitude = Math.pow(bet_amount / config.BASE_BET, 0.35);
-
         const combined = config.XP_A * risk + (1 - config.XP_A) * magnitude;
-
         const raw_xp = config.BASE_XP * combined;
-
         const xp = Math.floor(raw_xp * (result === 'win' ? config.WIN_MULTIPLIER : config.LOSS_MULTIPLIER));
 
         return xp;
