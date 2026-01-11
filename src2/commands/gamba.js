@@ -127,13 +127,13 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
         modified_result = second_chance_result;
 
         // consume item
-        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'sc', 1);
+        await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'sc', 1);
     }
 
     if(active_items['lc'] && modified_result.result === 'loss')
     {
         // consume item
-        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'lc', 1);
+        await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'lc', 1);
 
         modified_result.payout = modified_result.payout * 0.5;
         result_array.push({label: 'Loss Cushion', calc: 'x 0.5'})
@@ -144,7 +144,7 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
     {
         modified_result.payout = modified_result.payout * 2;
         // consume item
-        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'jj', 1);
+        await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'jj', 1);
         result_array.push({label: 'Jackpot Juice', calc: 'x 2'})
     }
 
@@ -157,7 +157,7 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
             result_array.push({label: `Carrot Surge (${active_items['cs']-1})`, calc: '+ 10%'})
         }
         // consume regardless of win/loss
-        await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'cs', 1);
+        await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'cs', 1);
     }
 
     return modified_result;

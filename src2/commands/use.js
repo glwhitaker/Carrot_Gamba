@@ -60,7 +60,12 @@ export async function handleUse(args, message, usage)
         if(!item_manager.current_items_activated[`${guild_id}-${user_id}`])
             item_manager.current_items_activated[`${guild_id}-${user_id}`] = {};
 
+        if(!item_manager.current_items_activated[`${guild_id}-${user_id}`][item_key])
+            item_manager.current_items_activated[`${guild_id}-${user_id}`][item_key] = 0;
+
         item_manager.current_items_activated[`${guild_id}-${user_id}`][item_key] += item_manager.getItem(item_key).max_uses || 1;
+
+        await item_manager.consumeItemForUser(user_id, guild_id, item_key, 1);
 
         return message.reply({
             flags: MessageFlags.IsComponentsV2,

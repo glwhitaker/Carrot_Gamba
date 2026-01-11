@@ -30,11 +30,11 @@ class XPManager
     {
         const rewards = [];
         rewards.push({key: 'carrots', amount: level * 1000});
-        rewards.push({key: 'second_chance_token', amount: 50});
-        rewards.push({key: 'loss_cushion', amount: 50});
-        rewards.push({key: 'jackpot_juice', amount: 50});
-        rewards.push({key: 'carrot_surge', amount: 50});
-        rewards.push({key: 'number_oracle', amount: 50});
+        rewards.push({key: 'sc', amount: 50});
+        rewards.push({key: 'lc', amount: 50});
+        rewards.push({key: 'jj', amount: 50});
+        rewards.push({key: 'cs', amount: 50});
+        rewards.push({key: 'no', amount: 50});
         return rewards;
     }
 

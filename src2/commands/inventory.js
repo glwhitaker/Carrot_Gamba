@@ -17,27 +17,29 @@ export async function handleInventory(args, message, usage)
         // get all items
         const user_items = await db_manager.getUserItems(user_id, guild_id);
 
-        // loop through user items and subtract active item quantities (divide by 5 if carrot surge)
         for(const item of user_items)
         {
-            if(active_items[item.key])
-            {
-                if(item.key === 'carrot_surge')
-                    item.quantity -= Math.ceil(active_items[item.key] / 5);
-                else
-                    item.quantity -= active_items[item.key];
-            }
-
             // get metadata from item manager
             const item_meta = item_manager.getItem(item.key);
             item.name = item_meta.name;
             item.desc = item_meta.desc;
             item.icon = item_meta.icon;
         }
+        
+        const active_arr = [];
+        for(const key in active_items)
+        {
+            const item_meta = item_manager.getItem(key);
+            active_arr.push({
+                key: key,
+                name: item_meta.name,
+                quantity: active_items[key]
+            });
+        }
 
         return message.reply({
             flags: MessageFlags.IsComponentsV2,
-            components: [MessageTemplates.inventoryMessage(user, user_items)]
+            components: [MessageTemplates.inventoryMessage(user, user_items, active_arr)]
         });
     }
 

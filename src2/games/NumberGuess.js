@@ -24,7 +24,7 @@ export class NumberGuess extends Game
         // if number oracle item used, choose 4 random numbers
         const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
         const hinted_numbers = [];
-        if(active_items['number_oracle'])
+        if(active_items['no'])
         {
             while(hinted_numbers.length < 4)
             {
@@ -36,7 +36,7 @@ export class NumberGuess extends Game
             hinted_numbers.push(winning_number);
 
             // consume item
-            await item_manager.consumeItemForUser(user.user_id, user.guild_id, 'number_oracle', 1);
+            await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'no', 1);
         }
 
         // show initial message prompting user to choose a number

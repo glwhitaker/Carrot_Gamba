@@ -97,20 +97,31 @@ export class MessageTemplates
         return string.replace(ANSI_REGEX, '').length;
     }
 
-    static padEndAnsi(str, targetLength)
+    static padEndAnsi(string, target_length)
     {
-        const len = this.visibleLength(str);
-        if(len >= targetLength)
-            return str;
-        return str + ' '.repeat(targetLength - len);
+        const len = this.visibleLength(string);
+        if(len >= target_length)
+            return string;
+        return string + ' '.repeat(target_length - len);
     }
 
-    static padStartAnsi(str, targetLength)
+    static padMidAnsi(string, target_length)
     {
-        const len = this.visibleLength(str);
-        if(len >= targetLength)
-            return str;
-        return ' '.repeat(targetLength - len) + str;
+        const len = this.visibleLength(string);
+        if(len >= target_length)
+            return string;
+        const total_padding = target_length - len;
+        const left_padding = Math.floor(total_padding / 2);
+        const right_padding = total_padding - left_padding;
+        return ' '.repeat(left_padding) + string + ' '.repeat(right_padding);
+    }
+
+    static padStartAnsi(string, target_length)
+    {
+        const len = this.visibleLength(string);
+        if(len >= target_length)
+            return string;
+        return ' '.repeat(target_length - len) + string;
     }
 
     // regular error
@@ -707,20 +718,38 @@ export class MessageTemplates
         return container;
     }
 
-    static inventoryMessage(user, items)
+    static inventoryMessage(user, items, active_items)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent('# Item Inventory');
-        const hint = new TextDisplayBuilder().setContent('>>> Type `^use <item_code>` to use an item from your inventory.');
+        const hint = new TextDisplayBuilder().setContent('>>> Type `^use <code>` to use an item from your inventory.');
 
         // show item name, code, quantity
         const name_width = 25;
-        const code_width = 20;
+        const code_width = 10;
         const qty_width = 10;
-        const rowTemplate = (name, code, qty) => `${this.padEndAnsi(name, name_width)}${this.padEndAnsi(code, code_width)}${this.padStartAnsi(qty, qty_width)}`;
+        const rowTemplate = (name, code, qty) => `${this.padEndAnsi(name, name_width)}${this.padStartAnsi(code, code_width)}${this.padStartAnsi(qty, qty_width)}`;
 
-        const table_header = rowTemplate('ITEM NAME', 'ITEM CODE', 'QUANTITY');
+        const active_header = rowTemplate('ACTIVE ITEMS', 'CODE', 'QUANTITY');
+        const table_header = rowTemplate('INVENTORY', 'CODE', 'QUANTITY');
         const separator_line = '─'.repeat(name_width + code_width + qty_width);
+
+        // active items
+        let active_content = '';
+        for(const item of active_items)
+        {
+            const active_name = item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name;
+            const active_code = item.key;
+            const uses = item.key === 'cs' ? Math.floor(item.quantity / 5) : item.quantity;
+            const active_quantity = this.colorLevelText(`x${uses}`, 1)
+
+            active_content += rowTemplate(active_name, active_code, active_quantity) + '\n';
+        }
+
+        if(active_content === '')
+            active_content = this.colorLevelText('No active items.', 1);
+
+        const active_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n${active_header}\n${separator_line}\n${active_content}\`\`\``);
 
         let table_content = '';
         for(const item of items)
@@ -729,11 +758,11 @@ export class MessageTemplates
             const code = item.key;
             const quantity = this.colorLevelText(`x${item.quantity}`, 1);
 
-            table_content += rowTemplate(display_name+item.icon, code, quantity) + '\n';
+            table_content += rowTemplate(display_name, code, quantity) + '\n';
         }
 
         if(table_content === '')
-            table_content = 'No items in inventory.';
+            table_content = this.colorLevelText('No items in inventory.', 1);
 
         const table_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n${table_header}\n${separator_line}\n${table_content}\`\`\``);
 
@@ -741,6 +770,7 @@ export class MessageTemplates
         .setAccentColor(COLORS.PRIMARY)
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(hint)
+        .addTextDisplayComponents(active_field)
         .addTextDisplayComponents(table_field)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());

@@ -5,7 +5,7 @@ class ItemManager
     constructor()
     {
         this.items = {
-            "second_chance_token" : {
+            "sc" : {
                 "key": "sc",
                 "name": "Second Chance Token",
                 "desc": "Grants a second chance on your next lost bet, giving you another opportunity to win the same amount.",
@@ -13,7 +13,7 @@ class ItemManager
                 "price": 5000,
                 "max_uses": 1
             },
-            "loss_cushion": {
+            "lc": {
                 "key": "lc",
                 "name": "Loss Cushion",
                 "desc": "Reduces the amount lost on your next failed bet by 50%.",
@@ -21,7 +21,7 @@ class ItemManager
                 "price": 3000,
                 "max_uses": 1
             },
-            "jackpot_juice": {
+            "jj": {
                 "key": "jj",
                 "name": "Jackpot Juice",
                 "desc": "Doubles your winnings on your next successful game.",
@@ -29,7 +29,7 @@ class ItemManager
                 "price": 10000,
                 "max_uses": 1
             },
-            "carrot_surge": {
+            "cs": {
                 "key": "cs",
                 "name": "Carrot Surge",
                 "desc": "Lasts for 5 games. If you win any of them, you earn +10% carrots on top of your winnings.",
@@ -37,7 +37,7 @@ class ItemManager
                 "price": 2000,
                 "max_uses": 5
             },
-            "number_oracle": {
+            "no": {
                 "key": "no",
                 "name": "Number Oracle",
                 "desc": "Highlights 5 numbers in Number Guess. The winning number is guaranteed to be among them.",
@@ -74,7 +74,7 @@ class ItemManager
         return this.current_items_activated[`${guild_id}-${user_id}`] || {};
     }
 
-    async consumeItemForUser(user_id, guild_id, item_key, quantity)
+    async consumeActiveItemForUser(user_id, guild_id, item_key, quantity)
     {
         if(!quantity)
             quantity = 1;
@@ -86,10 +86,18 @@ class ItemManager
             if(this.current_items_activated[`${guild_id}-${user_id}`][item_key] <= 0)
             {
                 delete this.current_items_activated[`${guild_id}-${user_id}`][item_key];
-                // remove item from user's inventory
-                await db_manager.removeItemFromUserInventory(user_id, guild_id, item_key, quantity);
+                
             }
         }
+    }
+
+    async consumeItemForUser(user_id, guild_id, item_key, quantity)
+    {
+        if(!quantity)
+            quantity = 1;
+
+        // remove item from user's inventory
+        await db_manager.removeItemFromUserInventory(user_id, guild_id, item_key, quantity);
     }
 }
 
