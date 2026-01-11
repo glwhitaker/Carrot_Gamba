@@ -6,7 +6,7 @@ class ItemManager
     {
         this.items = {
             "second_chance_token" : {
-                "key": "second_chance_token",
+                "key": "sc",
                 "name": "Second Chance Token",
                 "desc": "Grants a second chance on your next lost bet, giving you another opportunity to win the same amount.",
                 "icon": "🌀",
@@ -14,7 +14,7 @@ class ItemManager
                 "max_uses": 1
             },
             "loss_cushion": {
-                "key": "loss_cushion",
+                "key": "lc",
                 "name": "Loss Cushion",
                 "desc": "Reduces the amount lost on your next failed bet by 50%.",
                 "icon": "🛡️",
@@ -22,7 +22,7 @@ class ItemManager
                 "max_uses": 1
             },
             "jackpot_juice": {
-                "key": "jackpot_juice",
+                "key": "jj",
                 "name": "Jackpot Juice",
                 "desc": "Doubles your winnings on your next successful game.",
                 "icon": "💰",
@@ -30,15 +30,15 @@ class ItemManager
                 "max_uses": 1
             },
             "carrot_surge": {
-                "key": "carrot_surge",
+                "key": "cs",
                 "name": "Carrot Surge",
                 "desc": "Lasts for 5 games. If you win any of them, you earn +10% carrots on top of your winnings.",
                 "icon": "⚡",
-                "price": 7000,
+                "price": 2000,
                 "max_uses": 5
             },
             "number_oracle": {
-                "key": "number_oracle",
+                "key": "no",
                 "name": "Number Oracle",
                 "desc": "Highlights 5 numbers in Number Guess. The winning number is guaranteed to be among them.",
                 "icon": "🔮",

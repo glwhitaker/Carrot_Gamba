@@ -700,7 +700,47 @@ export class MessageTemplates
         .setAccentColor(COLORS.GOLD)
         .addTextDisplayComponents(header)
         .addActionRowComponents(new ActionRowBuilder().addComponents(string_select))
+        .addTextDisplayComponents(table_field)
         .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static inventoryMessage(user, items)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent('# Item Inventory');
+        const hint = new TextDisplayBuilder().setContent('>>> Type `^use <item_code>` to use an item from your inventory.');
+
+        // show item name, code, quantity
+        const name_width = 25;
+        const code_width = 20;
+        const qty_width = 10;
+        const rowTemplate = (name, code, qty) => `${this.padEndAnsi(name, name_width)}${this.padEndAnsi(code, code_width)}${this.padStartAnsi(qty, qty_width)}`;
+
+        const table_header = rowTemplate('ITEM NAME', 'ITEM CODE', 'QUANTITY');
+        const separator_line = '─'.repeat(name_width + code_width + qty_width);
+
+        let table_content = '';
+        for(const item of items)
+        {
+            const display_name = item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name;
+            const code = item.key;
+            const quantity = this.colorLevelText(`x${item.quantity}`, 1);
+
+            table_content += rowTemplate(display_name+item.icon, code, quantity) + '\n';
+        }
+
+        if(table_content === '')
+            table_content = 'No items in inventory.';
+
+        const table_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n${table_header}\n${separator_line}\n${table_content}\`\`\``);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.PRIMARY)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(hint)
         .addTextDisplayComponents(table_field)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());

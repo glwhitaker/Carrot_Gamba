@@ -60,7 +60,7 @@ export async function handleUse(args, message, usage)
         if(!item_manager.current_items_activated[`${guild_id}-${user_id}`])
             item_manager.current_items_activated[`${guild_id}-${user_id}`] = {};
 
-        item_manager.current_items_activated[`${guild_id}-${user_id}`][item_key] = item_manager.getItem(item_key).max_uses || 1;
+        item_manager.current_items_activated[`${guild_id}-${user_id}`][item_key] += item_manager.getItem(item_key).max_uses || 1;
 
         return message.reply({
             flags: MessageFlags.IsComponentsV2,

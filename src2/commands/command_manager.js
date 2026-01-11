@@ -9,6 +9,7 @@ import { handleUse } from './use.js';
 import { handleStats } from './stats.js';
 import { handleHelp } from './help.js';
 import { handleLeaderboard } from './leaderboard.js';
+import { handleInventory } from './inventory.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -94,7 +95,7 @@ class CommandManager
             {
                 inventory:
                 {
-                    // execute: handleInventory,
+                    execute: handleInventory,
                     description: 'View your item inventory',
                     usage: '^inventory, ^inv',
                     aliases: ['inventory', 'inv']
