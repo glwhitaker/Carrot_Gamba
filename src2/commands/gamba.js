@@ -113,6 +113,17 @@ export async function handleGamba(args, message, usage)
     }
 }
 
+async function sendItemMessage(user, item_key, message)
+{
+    // slight delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    await message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.itemUsedMessage(user, item_key)]
+    });
+}
+
 async function applyItemEffects(user, message, bet_amount, result, game, result_array)
 {
     // placeholder for item effects application
@@ -122,10 +133,10 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
     // first check for second chance token
     if(active_items['sc'] && result.result === 'loss')
     {
+        await sendItemMessage(user, 'sc', message);
         // give user a second chance
         const second_chance_result = await game.play(user, message, bet_amount, 'sc');
         modified_result = second_chance_result;
-
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'sc', 1);
     }

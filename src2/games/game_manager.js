@@ -1,5 +1,6 @@
 import { CoinToss } from './CoinToss.js';
 import { NumberGuess } from './NumberGuess.js';
+import { Blackjack } from './Blackjack.js';
 
 class GameManager
 {
@@ -13,6 +14,7 @@ class GameManager
     {
         this.gameClasses.set('cointoss', CoinToss);
         this.gameClasses.set('numberguess', NumberGuess);
+        this.gameClasses.set('blackjack', Blackjack);
     }
 
     getGame(name)

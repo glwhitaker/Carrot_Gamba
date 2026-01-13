@@ -440,9 +440,9 @@ export class MessageTemplates
 
         const rowTemplate = (name, value) => `${name.padEnd(stat_name_width)}${value.padStart(stat_value_width)}`;
 
-        const passive_mult_in_percent = '+' + ((user.progression.passive_multiplier - 1) * 100).toFixed(0) + '%';
+        const passive_mult = '+' + user.progression.passive_multiplier + '%';
         const user_table = [
-            rowTemplate('\u001b[1mPassive Carrot Multiplier:\u001b[0m', passive_mult_in_percent)
+            rowTemplate('\u001b[1mPassive Carrot Multiplier:\u001b[0m', passive_mult)
         ].join('\n');
 
         const stats_table = [
@@ -500,7 +500,7 @@ export class MessageTemplates
         const left_pad = 18;
         const right_pad = 18;
         const rowTemplate = (name, value) => `${name.padEnd(left_pad)}${value.padStart(right_pad)}`;
-        let result_calc = rowTemplate('Base Payout', `${won ? `+ ${this.formatNumber(base_payout)}` : `- ${this.formatNumber(bet_amount)}`} 🥕`);
+        let result_calc = rowTemplate('Base Payout', `${won || result === 'push' ? `+ ${this.formatNumber(base_payout)}` : `- ${this.formatNumber(bet_amount)}`} 🥕`);
         for(const step of result_array)
         {
             result_calc += `\n${rowTemplate(step.label, step.calc + ' 🥕')}`;
@@ -772,6 +772,116 @@ export class MessageTemplates
         .addTextDisplayComponents(hint)
         .addTextDisplayComponents(active_field)
         .addTextDisplayComponents(table_field)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static blackjackMessage(username, player_hand, dealer_hand, bet_amount, cards, player_value, dealer_value, hide)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# Blackjack`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+
+        let dealer_cards_string = `### Dealer Hand (${dealer_value})\n# `;
+        for(let i = 0; i < dealer_hand.length; i++)
+        {
+            if(hide && dealer_hand.length === 2 && i === 1)
+                dealer_cards_string += `${cards['back'].code} `;
+            else
+                dealer_cards_string += `${dealer_hand[i].code} `;
+        }
+        const dealer_cards_field = new TextDisplayBuilder().setContent(dealer_cards_string);
+
+        let player_cards_string = `### Your Hand (${player_value})\n# `;
+        for(const card of player_hand)
+        {
+            player_cards_string += `${card.code} `;
+        }
+        const player_cards_field = new TextDisplayBuilder().setContent(player_cards_string);
+
+        // buttons to hit or stand
+        const hit_button = new ButtonBuilder()
+        .setCustomId('blackjack_hit')
+        .setLabel('Hit')
+        .setStyle(1);
+
+        const stand_button = new ButtonBuilder()
+        .setCustomId('blackjack_stand')
+        .setLabel('Stand')
+        .setStyle(4);
+
+        if(player_value >= 21)
+        {
+            hit_button.setDisabled(true);
+            stand_button.setDisabled(true);
+        }
+
+        const action_row = new ActionRowBuilder().addComponents(hit_button, stand_button);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(dealer_cards_field)
+        .addTextDisplayComponents(player_cards_field)
+        .addSeparatorComponents(spacer)
+        .addSeparatorComponents(spacer)
+        .addActionRowComponents(action_row)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static blackjackResultMessage(username, player_hand, dealer_hand, bet_amount, player_value, dealer_value, result)
+    {
+        const res_text = result === 'win' ? 'You Win!' : result === 'loss' ? 'You Lose!' : 'Push!';
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# ${res_text}`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+
+        let dealer_cards_string = `### Dealer Hand (${dealer_value})\n# `;
+        for(const card of dealer_hand)
+        {
+            dealer_cards_string += `${card.code} `;
+        }
+        const dealer_cards_field = new TextDisplayBuilder().setContent(dealer_cards_string);
+
+        let player_cards_string = `### Your Hand (${player_value})\n# `;
+        for(const card of player_hand)
+        {
+            player_cards_string += `${card.code} `;
+        }
+        const player_cards_field = new TextDisplayBuilder().setContent(player_cards_string);
+
+        // buttons to hit or stand
+        const hit_button = new ButtonBuilder()
+        .setCustomId('blackjack_hit')
+        .setLabel('Hit')
+        .setStyle(1)
+        .setDisabled(true);
+
+        const stand_button = new ButtonBuilder()
+        .setCustomId('blackjack_stand')
+        .setLabel('Stand')
+        .setStyle(4)
+        .setDisabled(true);
+
+        const action_row = new ActionRowBuilder().addComponents(hit_button, stand_button);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(result === 'win' ? COLORS.SUCCESS : result === 'loss' ? COLORS.ERROR : COLORS.WARNING)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(dealer_cards_field)
+        .addTextDisplayComponents(player_cards_field)
+        .addSeparatorComponents(spacer)
+        .addSeparatorComponents(spacer)
+        .addActionRowComponents(action_row)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 

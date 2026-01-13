@@ -59,7 +59,7 @@ class DBManager
                     xp INTEGER DEFAULT 0,
                     level INTEGER DEFAULT 1,
                     streak INTEGER DEFAULT 0,
-                    passive_multiplier REAL DEFAULT 1.0,
+                    passive_multiplier INTEGER DEFAULT 0,
                     PRIMARY KEY (user_id, guild_id)
                 )
             `);
@@ -258,7 +258,7 @@ class DBManager
                 0,
                 1,
                 0,
-                1.0
+                0
             ]
         );
         // insert into player_stats
@@ -307,7 +307,7 @@ class DBManager
         user.progression.xp = 0;
         user.progression.level = 1;
         user.progression.streak = 0;
-        user.progression.passive_multiplier = 1.0;
+        user.progression.passive_multiplier = 0;
 
         this.user_cache.set(key, user);
 

@@ -40,7 +40,7 @@ class ActivityTracker
                 // track message activity
                 if(this.isValidMessage(message.content) && this.canEarnMessagePoints(user))
                 {
-                    const carrots = config.MESSAGE.POINTS * user.progression.passive_multiplier;
+                    const carrots = Math.floor(parseInt(config.MESSAGE.POINTS) * (1 + parseInt(user.progression.passive_multiplier) / 100));
                     await db_manager.updateUserBalance(user_id, guild_id, carrots);
                 }
             }
@@ -158,7 +158,7 @@ class ActivityTracker
             const user = await db_manager.getUser(user_id, guild_id);
             if(user)
             {
-                const carrots = config.VOICE.POINTS * user.progression.passive_multiplier;
+                const carrots = Math.floor(parseInt(config.VOICE.POINTS) * (1 + parseInt(user.progression.passive_multiplier) / 100));
                 await db_manager.updateUserBalance(user_id, guild_id, carrots);
             }
         });

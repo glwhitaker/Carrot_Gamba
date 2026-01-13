@@ -50,7 +50,7 @@ class XPManager
         }
 
         // give user plus 10% passive carrot gain
-        await db_manager.updateUserPassiveGain(user.user_id, user.guild_id, 0.1);
+        await db_manager.updateUserPassiveGain(user.user_id, user.guild_id, 10);
     }
 }
 
