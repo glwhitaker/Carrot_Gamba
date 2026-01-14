@@ -7,7 +7,7 @@ const config =
     "WEEKLY_COOLDOWN_MS": 7 * 24 * 60 * 60 * 1000,
     "WEEKLY_AMOUNT": 10000,
     "XP_A": 0.6,
-    "BASE_XP": 20,
+    "BASE_XP": 30,
     "BASE_BET": 1000,
     "WIN_MULTIPLIER": 1.2,
     "LOSS_MULTIPLIER": 0.8,

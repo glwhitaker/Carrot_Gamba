@@ -1,24 +1,34 @@
-import { getAllTimeLeaderboard, getLeaderboard } from '../database/db.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
+import { db_manager } from '../db/db_manager.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export async function handleLeaderboard(message) {
-    try {
-        const users = await getLeaderboard(message.guild.id);
-        const all_time_users = await getAllTimeLeaderboard(message.guild.id);
+export async function handleLeaderboard(args, message)
+{
+    const guild_id = message.guild.id;
+    const leaderboards = {};
+    leaderboards.balance = await db_manager.getLeaderboard(guild_id);
+    leaderboards.highest_balance = await db_manager.getAllTimeLeaderboard(guild_id);
 
-        if(!users.length) {
-            return message.reply({ 
-                embeds: [MessageTemplates.errorEmbed('You need to `^enroll` first!')] 
-            });
-        }
+    const reply = await message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.leaderboardMessage(leaderboards, 'balance')]
+    });
 
-        return message.reply({ 
-            embeds: [MessageTemplates.leaderboardEmbed(users), MessageTemplates.allTimeLeaderboardEmbed(all_time_users)]
+    const collector = reply.createMessageComponentCollector({
+        filter: i => i.user.id === message.author.id && i.customId === 'leaderboard_select',
+        time: 30000
+    });
+
+    collector.on('collect', async (interaction) =>
+    {
+        // confirm interaction
+        await interaction.deferUpdate();
+
+        const selected_category = interaction.values[0];
+
+        await interaction.editReply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.leaderboardMessage(leaderboards, selected_category)]
         });
-    } catch (error) {
-        console.error('Error displaying leaderboard:', error);
-        return message.reply({ 
-            embeds: [MessageTemplates.errorEmbed('Sorry, there was an error displaying the leaderboard.')]
-        });
-    }
+    });
 }

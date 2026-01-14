@@ -1,127 +1,82 @@
 import { Game } from './Game.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { item_manager } from "../items/item_manager.js";
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export class NumberGuess extends Game {
-    constructor() {
-        super('numberguess', 10); // name and minimum bet
+export class NumberGuess extends Game
+{
+    constructor()
+    {
+        super('numberguess');
         this.multiplier = 10;
-        this.maxNumber = 10;
-        this.minNumber = 1;
+        this.max_number = 10;
+        this.min_number = 1;
     }
 
-    parseBet(args) {
-        // Check if the bet argument is 'max' before parsing
-        if (args[1] === 'max') {
-            return { bet: 'max' }; // Return 'max' as a special value
-        }
+    async play(user, message, bet_amount)
+    {
+        const username = message.author.username;
+
+        // generate a number 1 to 10
+        // const winning_number = Math.floor(Math.random() * this.max_number) + 1;
+        const winning_number = 1;
         
-        const bet = parseInt(args[1]);   // First arg is bet
-        if (isNaN(bet) || !this.validateBet(bet)) {
-            return { error: `Bet must be at least ${this.minBet} carrots` };
+        // if number oracle item used, choose 4 random numbers
+        const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        const hinted_numbers = [];
+        if(active_items['no'])
+        {
+            while(hinted_numbers.length < 4)
+            {
+                const rand_num = Math.floor(Math.random() * this.max_number) + 1;
+                if(rand_num !== winning_number && !hinted_numbers.includes(rand_num))
+                    hinted_numbers.push(rand_num);
+            }
+            // add winning number to hinted numbers
+            hinted_numbers.push(winning_number);
+
+            // consume item
+            await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'no', 1);
         }
-        return { bet };
-    }
 
-    createNumberButtons() {
-        const rows = [
-            new ActionRowBuilder(),
-            new ActionRowBuilder()
-        ];
-        
-        for (let i = this.minNumber; i <= this.maxNumber; i++) {
-            const rowIndex = i <= 5 ? 0 : 1;
-            rows[rowIndex].addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`numberguess_${i}`)
-                    .setLabel(i.toString())
-                    .setStyle(ButtonStyle.Secondary)
-            );
-        }
-        return rows;
-    }
+        // show initial message prompting user to choose a number
+        const game_message = await message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.numberGuessMessage(username, bet_amount, this.min_number, this.max_number, hinted_numbers, false)]
+        });
 
-    async play(message, bet) {
-        try {
-            // Send initial message with number buttons
-            const initialMsg = await message.reply({
-                embeds: [MessageTemplates.numberGuessStartEmbed(message.author.username, bet, this.multiplier)],
-                components: this.createNumberButtons()
-            });
+        // create collector for button interaction
+        const collector = game_message.createMessageComponentCollector({
+            filter: i => i.user.id === message.author.id,
+            time: 30000
+        });
 
-            // Wait for button interaction
-            const filter = i => i.user.id === message.author.id;
-            const collector = initialMsg.createMessageComponentCollector({ filter, time: 30000 });
+        const result = await new Promise((resolve) =>
+        {
+            collector.on('collect', async (interaction) =>
+            {
+                // confirm interaction
+                await interaction.deferUpdate();
+                const guessed_number = parseInt(interaction.customId.split('_')[1]);
+                const win = (guessed_number === winning_number);
+                const base_payout = bet_amount * this.multiplier;
+                const payout = win ? bet_amount * this.multiplier : -bet_amount;
+                const result_str = win ? 'win' : 'loss';
 
-            return new Promise((resolve) => {
-                collector.on('collect', async (interaction) => {
-                    const guess = parseInt(interaction.customId.split('_')[1]);
-                    
-                    // Disable all buttons
-                    const disabledButtons = this.createNumberButtons();
-                    disabledButtons.forEach(row => {
-                        row.components.forEach(button => button.setDisabled(true));
-                    });
-                    await initialMsg.edit({ components: disabledButtons });
+                const temp_res = {result: result_str, payout: payout, message: game_message, guessed_number: guessed_number, winning_number: winning_number, base_payout: base_payout};
 
-                    // Build suspense
-                    await interaction.deferReply();
-                    await interaction.editReply({
-                        embeds: [MessageTemplates.numberGuessSelectEmbed(message.author.username, bet, guess)]
-                    });
-                    const suspenseMsg = await interaction.fetchReply();
-
-                    // Wait for dramatic effect
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-
-                    // Generate winning number
-                    const winningNumber = Math.floor(Math.random() * this.maxNumber) + 1;
-                    const won = guess === winningNumber;
-                    const winnings = won ? bet * (this.multiplier - 1) : -bet;
-
-                    console.log('Calling updateGameStats with bet:', bet, typeof bet);
-                    // Update game stats before showing final result
-                    await this.updateGameStats(message.author.id, message.guild.id, bet, won ? 'win' : 'loss', won ? winnings + bet : winnings);
-
-                    // Update message with result
-                    await suspenseMsg.edit({
-                        embeds: [MessageTemplates.numberGuessResultEmbed(
-                            message.author.username,
-                            guess,
-                            winningNumber,
-                            won ? bet * this.multiplier : 0
-                        )]
-                    });
-
-                    collector.stop();
-                    resolve(winnings);
+                game_message.edit({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [
+                        MessageTemplates.numberGuessResultMessage(username, bet_amount, this.min_number, this.max_number, temp_res)
+                    ]
                 });
 
-                collector.on('end', (collected) => {
-                    if (collected.size === 0) {
-                        // Disable buttons if no selection was made
-                        const disabledButtons = this.createNumberButtons();
-                        disabledButtons.forEach(row => {
-                            row.components.forEach(button => button.setDisabled(true));
-                        });
-                        initialMsg.edit({ components: disabledButtons });
-                        resolve(0);
-                    }
-                });
+                collector.stop();
+                resolve(temp_res);
             });
+        });
 
-        } catch (error) {
-            console.error('Error in number guess game:', error);
-            return 0;
-        }
-    }
-
-    getHelpMessage() {
-        return {
-            name: 'Number Guess',
-            value: `Guess a number between ${this.minNumber}-${this.maxNumber} to win ${this.multiplier}x your bet!\n` +
-                  `Usage: \`^gamba numberguess <bet|max>\`\n` +
-                  `Example: \`^gamba numberguess 100\` or \`^gamba numberguess max\``
-        };
+        return result;
     }
 }

@@ -1,77 +1,59 @@
-import { getDatabase, isUserEnrolled, updateUserBalance } from '../database/db.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
-import { DAILY_AMOUNT, DAILY_COOLDOWN_MS } from '../utils/constants.js';
+import { db_manager } from '../db/db_manager.js';
+import config from '../config.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export async function handleDaily(message) {
-    try {
-        // check if user is enrolled
-        if (!await isUserEnrolled(message.author.id, message.guild.id)) {
-            return message.reply({
-                embeds: [MessageTemplates.errorEmbed('You need to `^enroll` first!')]
-            });
-        }
+export async function handleDaily(args, message)
+{
+    const user_id = message.author.id;
+    const guild_id = message.guild.id;
+    const username = message.author.username;
+    const current_time = new Date();
 
-        const db = getDatabase();
+    const user = await db_manager.getUser(user_id, guild_id);
 
-        // get user's last claim time
-        const user = await db.get(
-            `SELECT strftime('%s', last_daily_claim) as last_claim_unix 
-             FROM users WHERE user_id = ? AND guild_id = ?`,
-            [message.author.id, message.guild.id]
-        );
+    if(user)
+    {
+        const last_claim = new Date(user.last_daily_claim);
+        const time_diff = current_time - last_claim;
 
-        const now = Math.floor(Date.now() / 1000); // Current time in seconds
-        const lastClaim = user.last_claim_unix ? parseInt(user.last_claim_unix) : 0;
-        const timeElapsed = (now - lastClaim) * 1000; // Convert to milliseconds for comparison
+        if(time_diff > config.DAILY_COOLDOWN_MS)
+        {
+            // update last claim in db
+            await db_manager.updateLastDailyClaim(user_id, guild_id, current_time.toISOString());
 
-        // // Debug logging
-        // console.log('Debug time values:');
-        // console.log('Now:', new Date(now * 1000).toISOString());
-        // console.log('Last claim:', new Date(lastClaim * 1000).toISOString());
-        // console.log('Time elapsed (ms):', timeElapsed);
-        // console.log('Cooldown (ms):', DAILY_COOLDOWN_MS);
-
-        // check if enough time has passed
-        if (timeElapsed < DAILY_COOLDOWN_MS) {
-            const timeRemaining = DAILY_COOLDOWN_MS - timeElapsed;
-            const hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000));
-            const minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000));
+            // award daily gift
+            await db_manager.updateUserBalance(user_id, guild_id, config.DAILY_AMOUNT);
 
             return message.reply({
-                embeds: [MessageTemplates.dailyCooldownEmbed(hoursRemaining, minutesRemaining)]
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.dailyRewardMessage(username, config.DAILY_AMOUNT)],
+                files: [{
+                    attachment:'src2/img/gift.png',
+                    name:'gift.png'
+                }]
             });
         }
+        else
+        {
+            // find hours and minutes remaining
+            const time_remaining = config.DAILY_COOLDOWN_MS - time_diff;
+            const hours_remaining = Math.floor(time_remaining / (1000 * 60 * 60));
+            const minutes_remaining = Math.floor((time_remaining % (1000 * 60 * 60)) / (1000 * 60));
 
-        // First update the last claim time using Unix timestamp
-        await db.run(
-            `UPDATE users 
-             SET last_daily_claim = datetime(?, 'unixepoch')
-             WHERE user_id = ? AND guild_id = ?`,
-            [now, message.author.id, message.guild.id]
-        );
-
-        // Then award daily carrots
-        const result = await updateUserBalance(
-            message.author.id,
-            message.guild.id,
-            DAILY_AMOUNT,
-            'Daily reward'
-        );
-
-        if (!result.success) {
-            return message.reply({ 
-                embeds: [MessageTemplates.errorEmbed(result.error)]
+            return message.reply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.dailyCooldownMessage(hours_remaining, minutes_remaining)],
+                files: [{
+                    attachment:'src2/img/clock.png',
+                    name:'clock.png'
+                }]
             });
         }
-
-        return message.reply({
-            embeds: [MessageTemplates.dailyRewardEmbed(message.author.username, DAILY_AMOUNT)]
-        });
-        
-    } catch (error) {
-        console.error('Error handling daily command:', error);
-        return message.reply({ 
-            embeds: [MessageTemplates.errorEmbed('Error processing daily reward.')] 
-        });
     }
+
+    return message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
+    });
 }

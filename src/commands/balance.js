@@ -1,31 +1,29 @@
-import { getDatabase } from '../database/db.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
+import { db_manager } from '../db/db_manager.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export async function handleBalance(message) {
-    const db = getDatabase();
-    const userID = message.author.id;
-    const guildId = message.guild.id;
+export async function handleBalance(args, message)
+{
+    const user_id = message.author.id;
+    const guild_id = message.guild.id;
+    const username = message.author.username;
 
-    try {
-        const user = await db.get('SELECT balance FROM users WHERE user_id = ? AND guild_id = ?', [userID, guildId]);
+    const balance = await db_manager.getUserBalance(user_id, guild_id);
 
-        // check is user in enrolled
-        if(!user) {
-            return message.reply({
-                embeds: [MessageTemplates.errorEmbed('You need to `!enroll` first before checking your balance!')]
-            });
-        }
-
-        // format balance with commas
-        const formattedBalance = MessageTemplates.formatNumber(user.balance);
-
-        return message.reply({ 
-            embeds: [MessageTemplates.balanceEmbed(message.author.username, formattedBalance)]
-        });
-    } catch (error) {
-        console.error('Error in balance command:', error);
-        return message.reply({ 
-            embeds: [MessageTemplates.errorEmbed('Sorry, there was an error checking your balance.')] 
+    if(balance !== null)
+    {
+        return message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.balanceMessage(username, balance)],
+            files: [{
+                attachment:'src2/img/bank.png',
+                name:'image.png'
+            }]
         });
     }
+
+    return message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
+    });
 }

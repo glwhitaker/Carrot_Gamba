@@ -506,7 +506,7 @@ export class MessageTemplates
             result_calc += `\n${rowTemplate(step.label, step.calc + ' 🥕')}`;
         }
         result_calc += `\n${'-'.repeat(left_pad + right_pad)}\n`;
-        result_calc += rowTemplate('Final Payout', `${won ? '+ ' : '- '}${this.formatNumber(Math.abs(payout))} 🥕`);
+        result_calc += rowTemplate('Final Payout', `${won || result === 'push' ? '+ ' : '- '}${this.formatNumber(Math.abs(payout))} 🥕`);
         let result_string = `\`\`\`ansi\n${result_calc}\n\`\`\``;
         const result_field = new TextDisplayBuilder().setContent(result_string);
         

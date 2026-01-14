@@ -1,103 +1,84 @@
-import { isUserEnrolled, updateUserBalance } from '../database/db.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
+import { db_manager } from '../db/db_manager.js';
+import config from '../config.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export async function handleDonate(message, args) {
-    try {
-        if (args.length !== 2) {
+export async function handleDonate(args, message, usage)
+{
+    const user_id = message.author.id;
+    const guild_id = message.guild.id;
+
+    const user = await db_manager.getUser(user_id, guild_id);
+
+    if(user)
+    {
+        if(args.length !== 2)
+        {
             return message.reply({
-                embeds: [MessageTemplates.errorEmbed('Usage: `^donate <@user> <amount>`')]
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.errorMessage(`Usage: \`${usage}\``)]
             });
         }
 
-        // Parse user mention and amount
-        const targetUser = message.mentions.users.first();
+        // parse user mention
+        const target_user = message.mentions.users.first();
         const amount = parseInt(args[1]);
 
-        // Validate target user
-        if (!targetUser) {
+        // validations
+        if(!target_user)
+        {
             return message.reply({
-                embeds: [MessageTemplates.errorEmbed('Please mention a user to donate to!')]
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.errorMessage('Please mention a user to donate to!')]
+            })
+        }
+
+        const t_user = await db_manager.getUser(target_user.id, guild_id);
+
+        if(!t_user)
+        {
+            return message.reply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.errorMessage(`${target_user.username} needs to \`^enroll\` first!`)]
             });
         }
 
-        // Validate amount
-        if (isNaN(amount) || amount <= 0) {
+        if(target_user.id === user_id)
+        {
             return message.reply({
-                embeds: [MessageTemplates.errorEmbed('Please specify a valid positive amount!')]
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.errorMessage('You cannot donate to yourself!')]
             });
         }
 
-        // Can't donate to yourself
-        if (targetUser.id === message.author.id) {
+        if(isNaN(amount) || amount <= 0)
+        {
             return message.reply({
-                embeds: [MessageTemplates.errorEmbed('You cannot donate to yourself!')]
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.errorMessage('Please enter a valid amount to donate!')]
             });
         }
 
-        // Check if both users are enrolled
-        const [senderEnrolled, receiverEnrolled] = await Promise.all([
-            isUserEnrolled(message.author.id, message.guild.id),
-            isUserEnrolled(targetUser.id, message.guild.id)
-        ]);
-
-        if (!senderEnrolled) {
+        if(user.balance < amount)
+        {
             return message.reply({
-                embeds: [MessageTemplates.errorEmbed('You need to `^enroll` first!')]
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.errorMessage(`You don't have enough carrots!\nYour balance: **${MessageTemplates.formatNumber(user.balance)}** 🥕`)]
             });
         }
 
-        if (!receiverEnrolled) {
-            return message.reply({
-                embeds: [MessageTemplates.errorEmbed('That user needs to `^enroll` first!')]
-            });
-        }
+        // perform transaction
+        await db_manager.updateUserBalance(user_id, guild_id, -amount);
+        await db_manager.updateUserBalance(target_user.id, guild_id, amount);
 
-        // Perform the donation using updateUserBalance
-        const senderResult = await updateUserBalance(
-            message.author.id,
-            message.guild.id,
-            -amount,
-            `Donation to ${targetUser.username}`
-        );
-
-        if (!senderResult.success) {
-            return message.reply({
-                embeds: [MessageTemplates.errorEmbed(
-                    senderResult.error === 'Insufficient balance' 
-                        ? `You don't have enough carrots! You have ${senderResult.newBalance} 🥕`
-                        : 'There was an error processing your donation.'
-                )]
-            });
-        }
-
-        // If sender's deduction succeeded, add to receiver
-        const receiverResult = await updateUserBalance(
-            targetUser.id,
-            message.guild.id,
-            amount,
-            `Donation from ${message.author.username}`
-        );
-
-        if (!receiverResult.success) {
-            // This should never happen since we're adding points
-            console.error('Unexpected error adding points to receiver:', receiverResult.error);
-            return message.reply({
-                embeds: [MessageTemplates.errorEmbed('There was an error processing your donation.')]
-            });
-        }
-
-        // Send success message
         return message.reply({
-            embeds: [MessageTemplates.successEmbed(
-                '🎁 Donation Successful!',
-                `You donated ${amount} 🥕 to ${targetUser.username}!`
-            )]
-        });
-
-    } catch (error) {
-        console.error('Error in donate command:', error);
-        return message.reply({
-            embeds: [MessageTemplates.errorEmbed('There was an error processing your donation.')]
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.successMessage('Donation Successful!', `You have donated **${MessageTemplates.formatNumber(amount)}** 🥕 to **${target_user.username}**!`)]
         });
     }
+
+    return message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
+    });
 }

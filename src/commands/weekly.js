@@ -1,70 +1,61 @@
-import { getDatabase, isUserEnrolled, updateUserBalance } from '../database/db.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
-import { WEEKLY_AMOUNT, WEEKLY_COOLDOWN_MS } from '../utils/constants.js';
+import { db_manager } from '../db/db_manager.js';
+import config from '../config.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export async function handleWeekly(message) {
-    try {
-        // check if user is enrolled
-        if (!await isUserEnrolled(message.author.id, message.guild.id)) {
-            return message.reply({
-                embeds: [MessageTemplates.errorEmbed('You need to `^enroll` first!')]
-            });
-        }
+export async function handleWeekly(args, message)
+{
+    const user_id = message.author.id;
+    const guild_id = message.guild.id;
+    const username = message.author.username;
+    const current_time = new Date();
 
-        const db = getDatabase();
+    const user = await db_manager.getUser(user_id, guild_id);
 
-        // get user's last claim time
-        const user = await db.get(
-            `SELECT strftime('%s', last_weekly_claim) as last_claim_unix 
-             FROM users WHERE user_id = ? AND guild_id = ?`,
-            [message.author.id, message.guild.id]
-        );
+    if(user)
+    {
+        const last_claim = new Date(user.last_weekly_claim);
+        const time_diff = current_time - last_claim;
 
-        const now = Math.floor(Date.now() / 1000); // Current time in seconds
-        const lastClaim = user.last_claim_unix ? parseInt(user.last_claim_unix) : 0;
-        const timeElapsed = (now - lastClaim) * 1000; // Convert to milliseconds for comparison
+        if(time_diff > config.WEEKLY_COOLDOWN_MS)
+        {
+            // update last claim in db
+            await db_manager.updateLastWeeklyClaim(user_id, guild_id, current_time.toISOString());
 
-        // check if enough time has passed
-        if (timeElapsed < WEEKLY_COOLDOWN_MS) {
-            const timeRemaining = WEEKLY_COOLDOWN_MS - timeElapsed;
-            const daysRemaining = Math.floor(timeRemaining / (24 * 60 * 60 * 1000));
-            const hoursRemaining = Math.floor((timeRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+            // award daily gift
+            await db_manager.updateUserBalance(user_id, guild_id, config.WEEKLY_AMOUNT);
 
             return message.reply({
-                embeds: [MessageTemplates.weeklyCooldownEmbed(daysRemaining, hoursRemaining)]
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.weeklyRewardMessage(username, config.WEEKLY_AMOUNT)],
+                files: [{
+                    attachment:'src2/img/gift.png',
+                    name:'gift.png'
+                }]
             });
         }
+        else
+        {
+            // find days, hours, and minutes remaining
+            const time_remaining = config.WEEKLY_COOLDOWN_MS - time_diff;
+            const days_remaining = Math.floor(time_remaining / (1000 * 60 * 60 * 24));
+            const hours_remaining = Math.floor((time_remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes_remaining = Math.floor((time_remaining % (1000 * 60 * 60)) / (1000 * 60));
+    
 
-        // First update the last claim time using Unix timestamp
-        await db.run(
-            `UPDATE users 
-             SET last_weekly_claim = datetime(?, 'unixepoch')
-             WHERE user_id = ? AND guild_id = ?`,
-            [now, message.author.id, message.guild.id]
-        );
-
-        // Then award weekly carrots
-        const result = await updateUserBalance(
-            message.author.id,
-            message.guild.id,
-            WEEKLY_AMOUNT,
-            'Weekly reward'
-        );
-
-        if (!result.success) {
-            return message.reply({ 
-                embeds: [MessageTemplates.errorEmbed(result.error)]
+            return message.reply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.weeklyCooldownMessage(days_remaining, hours_remaining, minutes_remaining)],
+                files: [{
+                    attachment:'src2/img/clock.png',
+                    name:'clock.png'
+                }]
             });
         }
-
-        return message.reply({
-            embeds: [MessageTemplates.weeklyRewardEmbed(message.author.username, WEEKLY_AMOUNT)]
-        });
-        
-    } catch (error) {
-        console.error('Error handling weekly command:', error);
-        return message.reply({ 
-            embeds: [MessageTemplates.errorEmbed('Error processing weekly reward.')] 
-        });
     }
+
+    return message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
+    });
 }

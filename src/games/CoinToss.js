@@ -1,51 +1,51 @@
 import { Game } from './Game.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
+import { item_manager } from "../items/item_manager.js";
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export class CoinToss extends Game {
-    constructor() {
-        super('cointoss', 10);
+export class CoinToss extends Game
+{
+    constructor()
+    {
+        super('cointoss');
     }
 
-    parseBet(args) {
-        // Check if the bet argument is 'max' before parsing
-        if (args[1] === 'max') {
-            return { bet: 'max' }; // Return 'max' as a special value
-        }
-        
-        const bet = parseInt(args[1]); // CoinToss just needs the bet amount
-        if (isNaN(bet) || !this.validateBet(bet)) {
-            return { error: `Bet must be at least ${this.minBet} carrots` };
-        }
-        return { bet };
-    }
+    async play(user, message, bet_amount)
+    {
+        const username = message.author.username;
 
-    async play(message, bet) {
-        const win = Math.random() >= 0.5;
-        const winnings = win ? bet : -bet;
+        const win = Math.random() < 0.5;
+        const payout = win ? bet_amount : -bet_amount;
+        const base_payout = bet_amount;
+        const result = win ? 'win' : 'loss';
 
-        // Send initial message
-        const gameMessage = await message.reply({
-            embeds: [MessageTemplates.coinTossEmbed(message.author.username, bet)]
+        const animation_frames = ['💫', '🪙', '💫', '🪙'];
+
+        // send initial message that game has started
+        const game_message = await message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.coinTossMessage(username, bet_amount)]
         });
 
-        // Animate the coin toss with improved animations
-        const animations = ['💫', '🪙', '💫', '🪙', '💫'];
-        for (const frame of animations) {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            await gameMessage.edit({
-                embeds: [MessageTemplates.coinTossEmbed(message.author.username, bet, frame)]
+        // animate coin toss
+        for (const frame of animation_frames) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await game_message.edit({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.coinTossMessage(username, bet_amount, frame)]
             });
         }
 
-        // Update game stats before showing final result
-        await this.updateGameStats(message.author.id, message.guild.id, bet, win ? 'win' : 'loss', winnings);
-
-        // Show final result after a short pause
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await gameMessage.edit({
-            embeds: [MessageTemplates.coinTossResultEmbed(message.author.username, bet, win)]
+        // show final result after animation
+        await game_message.edit({
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+                MessageTemplates.coinTossResultMessage(username, bet_amount, result)
+            ]
         });
 
-        return winnings;
+        const res = {result: result, payout: payout, message: game_message, base_payout: base_payout};
+        
+        return res;
     }
 }

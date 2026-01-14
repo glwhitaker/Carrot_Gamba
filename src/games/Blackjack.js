@@ -1,272 +1,416 @@
 import { Game } from './Game.js';
-import {ActionRowBuilder, ButtonBuilder, ButtonStyle} from 'discord.js';
-import {MessageTemplates} from '../utils/messageTemplates.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export class BlackJack extends Game {
-    constructor() {
-        super('blackjack', 10);
+export class Blackjack extends Game
+{
+    constructor()
+    {
+        super('blackjack');
         this.deck = [];
-        this.suits = ['♠', '♥', '♦', '♣'];
-        this.values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        this.cards ={
+            cA: { code: '<:cardClubs_A:1460058607491092702>', value: 'A' },
+            c2: { code: '<:cardClubs_2:1460058514532733080>', value: '2' },
+            c3: { code: '<:cardClubs_3:1460058515858260050>', value: '3' },
+            c4: { code: '<:cardClubs_4:1460058518726901822>', value: '4' },
+            c5: { code: '<:cardClubs_5:1460058520035524843>', value: '5' },
+            c6: { code: '<:cardClubs_6:1460058521046356212>', value: '6' },
+            c7: { code: '<:cardClubs_7:1460058522292195369>', value: '7' },
+            c8: { code: '<:cardClubs_8:1460058523500154900>', value: '8' },
+            c9: { code: '<:cardClubs_9:1460058524414382221>', value: '9' },
+            c10: { code: '<:cardClubs_10:1460058525253238867>', value: '10' },
+            cJ: { code: '<:cardClubs_J:1460058529514782944>', value: 'J' },
+            cK: { code: '<:cardClubs_K:1460058531997941821>', value: 'K' },
+            cQ: { code: '<:cardClubs_Q:1460058582140850391>', value: 'Q' },
+            
+            dA: { code: '<:cardDiamonds_A:1460058658934100155>', value: 'A' },
+            d2: { code: '<:cardDiamonds_2:1460058648033366136>', value: '2' },
+            d3: { code: '<:cardDiamonds_3:1460058649304236164>', value: '3' },
+            d4: { code: '<:cardDiamonds_4:1460058650503544832>', value: '4' },
+            d5: { code: '<:cardDiamonds_5:1460058651413839974>', value: '5' },
+            d6: { code: '<:cardDiamonds_6:1460058652252569643>', value: '6' },
+            d7: { code: '<:cardDiamonds_7:1460058653196288213>', value: '7' },
+            d8: { code: '<:cardDiamonds_8:1460058654777802885>', value: '8' },
+            d9: { code: '<:cardDiamonds_9:1460058656228769792>', value: '9' },
+            d10: { code: '<:cardDiamonds_10:1460058694644535428>', value: '10' },
+            dJ: { code: '<:cardDiamonds_J:1460058695877791840>', value: 'J' },
+            dK: { code: '<:cardDiamonds_K:1460058662608568371>', value: 'K' },
+            dQ: { code: '<:cardDiamonds_Q:1460058693620994132>', value: 'Q' },
+            
+            hA: { code: '<:cardHearts_A:1460058776102109236>', value: 'A' },
+            h2: { code: '<:cardHearts_2:1460058719852298240>', value: '2' },
+            h3: { code: '<:cardHearts_3:1460058721106268324>', value: '3' },
+            h4: { code: '<:cardHearts_4:1460058722314358966>', value: '4' },
+            h5: { code: '<:cardHearts_5:1460058723677376676>', value: '5' },
+            h6: { code: '<:cardHearts_6:1460058724910764271>', value: '6' },
+            h7: { code: '<:cardHearts_7:1460058726190026804>', value: '7' },
+            h8: { code: '<:cardHearts_8:1460058729163657469>', value: '8' },
+            h9: { code: '<:cardHearts_9:1460058730937847913>', value: '9' },
+            h10: { code: '<:cardHearts_10:1460058731999002805>', value: '10' },
+            hJ: { code: '<:cardHearts_J:1460058734381502595>', value: 'J' },
+            hQ: { code: '<:cardHearts_Q:1460058738089267400>', value: 'Q' },
+            hK: { code: '<:cardHearts_K:1460058775091150908>', value: 'K' },
+            
+            sA: { code: '<:cardSpades_A:1460058817214677228>', value: 'A' },
+            s2: { code: '<:cardSpades_2:1460058806066352239>', value: '2' },
+            s3: { code: '<:cardSpades_3:1460058807353737439>', value: '3' },
+            s4: { code: '<:cardSpades_4:1460058808175820802>', value: '4' },
+            s5: { code: '<:cardSpades_5:1460058810163920917>', value: '5' },
+            s6: { code: '<:cardSpades_6:1460058811103580394>', value: '6' },
+            s7: { code: '<:cardSpades_7:1460058811984248986>', value: '7' },
+            s8: { code: '<:cardSpades_8:1460058812898873598>', value: '8' },
+            s9: { code: '<:cardSpades_9:1460058814215622729>', value: '9' },
+            s10: { code: '<:cardSpades_10:1460074779737587898>', value: '10' },
+            sJ: { code: '<:cardSpades_J:1460074780802945176>', value: 'J' },
+            sQ: { code: '<:cardSpades_Q:1460074782518280192>', value: 'Q' },
+            sK: { code: '<:cardSpades_K:1460069132048404584>', value: 'K' },
+            
+            back: { code: '<:cardBackRed:1460069134741016576>', value: '0' }
+        };
+        this.dealer_hand = [];
+        this.player_hand = [];
     }
 
-    parseBet(args) {
-        // Check if the bet argument is 'max' before parsing
-        if (args[1] === 'max') {
-            return { bet: 'max' }; // Return 'max' as a special value
-        }
-        
-        const bet = parseInt(args[1]); // Blackjack just needs the bet amount
-        if (isNaN(bet) || !this.validateBet(bet)) {
-            return { error: `Bet must be at least ${this.minBet} carrots` };
-        }
-        return { bet };
-    }
-
-    createDeck() {
+    createDeck()
+    {
         this.deck = [];
-        for (const suit of this.suits) {
-            for (const value of this.values) {
-                this.deck.push({ suit, value });
+        this.player_hand = [];
+        this.dealer_hand = [];
+        // create a standard 52-card deck
+        for(const key in this.cards)
+        {
+            if(key !== 'back')
+            {
+                this.deck.push(this.cards[key]);
             }
         }
 
         // shuffle the deck
-        for (let i = this.deck.length - 1; i > 0; i--) {
+        for(let i = this.deck.length - 1; i > 0; i--)
+        {
             const j = Math.floor(Math.random() * (i + 1));
             [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
         }
     }
 
-    drawCard() {
-        return this.deck.pop();
+    dealCard(hand)
+    {
+        hand.push(this.deck.pop());
     }
 
-    calculateHand(hand) {
-        let value = 0;
-        let aces = 0;
+    calculateHandValue(hand)
+    {
+        let value  = 0;
+        let ace_count = 0;
 
-        for (const card of hand) {
-            if (card.value == 'A'){
-                aces += 1;
-            }
-            else if (['K', 'Q', 'J'].includes(card.value)) {
+        for(const card of hand)
+        {
+            if(['J', 'Q', 'K'].includes(card.value))
                 value += 10;
+            else if(card.value === 'A')
+            {
+                value += 11
+                ace_count += 1;
             }
-            else {
+            else
                 value += parseInt(card.value);
+
+            // adjust for aces
+            while(value > 21 && ace_count > 0)
+            {
+                value -= 10;
+                ace_count -= 1;
             }
         }
 
-        // handle aces
-        for (let i = 0; i < aces; i++) {
-            if (value + 11 <= 21) {
-                value += 11
-            }
-            else {
-                value += 1;
-            }
-        }
         return value;
     }
 
-    formatHand(hand, hideFirst = false) {
-        if (hideFirst) {
-            return [`🎴`, ...hand.slice(1).map(card => `${card.suit}${card.value}`)].join(' ');
-        }
-        return hand.map(card => `${card.suit}${card.value}`).join(' ');
+    async update_game_message(game_message, username, bet_amount, player_value, dealer_value, hide_dealer)
+    {
+        await game_message.edit({
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+                MessageTemplates.blackjackMessage(
+                    username,
+                    this.player_hand,
+                    this.dealer_hand,
+                    bet_amount,
+                    this.cards,
+                    player_value,
+                    dealer_value,
+                    hide_dealer
+                )
+            ]
+        });
     }
 
-    getGameButtons(disabled = false) {
-        return new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('hit')
-                    .setLabel('Hit')
-                    .setStyle(ButtonStyle.Primary)
-                    .setDisabled(disabled),
-                new ButtonBuilder()
-                    .setCustomId('stand')
-                    .setLabel('Stand')
-                    .setStyle(ButtonStyle.Secondary)
-                    .setDisabled(disabled)
-            );
+    async update_result_message(game_message, username, bet_amount, player_value, dealer_value, result)
+    {
+        await game_message.edit({
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+                MessageTemplates.blackjackResultMessage(
+                    username,
+                    this.player_hand,
+                    this.dealer_hand,
+                    bet_amount,
+                    player_value,
+                    dealer_value,
+                    result
+                )
+            ]
+        });
     }
 
-    isSoft17(hand) {
-        let value = 0;
-        let aces = 0;
-
-        // Calculate value without considering aces as 11
-        for (const card of hand) {
-            if (card.value === 'A') {
-                aces += 1;
-                value += 1;
-            } else if (['K', 'Q', 'J'].includes(card.value)) {
-                value += 10;
-            } else {
-                value += parseInt(card.value);
-            }
-        }
-
-        // If we have an ace and the total is 17, it's a soft 17
-        return aces > 0 && value === 17;
+    async sleep(ms)
+    {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    async play(message, bet) {
-        this.createDeck();
-        const playerHand = [this.drawCard(), this.drawCard()];
-        const dealerHand = [this.drawCard(), this.drawCard()];
+    async stand(game_message, username, bet_amount)
+    {
+        let res = {};
 
-        const gameEmbed = MessageTemplates.blackjackEmbed(
-            message.author.username,
-            bet,
-            dealerHand,
-            playerHand,
-            this.calculateHand(playerHand),
-            true
+        const player_value = this.calculateHandValue(this.player_hand);
+        let dealer_value = this.calculateHandValue(this.dealer_hand);
+
+        await this.update_game_message(
+            game_message,
+            username,
+            bet_amount,
+            player_value,
+            dealer_value,
+            false
         );
 
-        const gameMessage = await message.reply({
-            embeds: [gameEmbed],
-            components: [this.getGameButtons()]
+        while(dealer_value < 17)
+        {
+            this.dealCard(this.dealer_hand);
+            dealer_value = this.calculateHandValue(this.dealer_hand);
+
+            await this.sleep(1000);
+
+            await this.update_game_message(
+                game_message,
+                username,
+                bet_amount,
+                player_value,
+                dealer_value,
+                false
+            );
+        }
+
+        if(dealer_value > 21 || player_value > dealer_value)
+        {
+            await this.update_result_message(
+                game_message,
+                username,
+                bet_amount,
+                player_value,
+                dealer_value,
+                'win'
+            );
+
+            res = {
+                result: 'win',
+                payout: bet_amount,
+                message: game_message,
+                player_value: player_value,
+                dealer_value: dealer_value,
+                base_payout: bet_amount
+            };
+        }
+        else if(player_value < dealer_value)
+        {
+            await this.update_result_message(
+                game_message,
+                username,
+                bet_amount,
+                player_value,
+                dealer_value,
+                'loss'
+            );
+
+            res = {
+                result: 'loss',
+                payout: -bet_amount,
+                message: game_message,
+                player_value: player_value,
+                dealer_value: dealer_value,
+                base_payout: bet_amount
+            };
+        }
+        else
+        {
+            await this.update_result_message(
+                game_message,
+                username,
+                bet_amount,
+                player_value,
+                dealer_value,
+                'push'
+            );
+
+            res = {
+                result: 'push',
+                payout: 0,
+                message: game_message,
+                player_value: player_value,
+                dealer_value: dealer_value,
+                base_payout: 0
+            };
+        }
+
+        return res;
+    }
+
+    async play(user, message, bet_amount)
+    {
+        const username = message.author.username;
+
+        this.createDeck();
+        this.dealCard(this.player_hand);
+        this.dealCard(this.dealer_hand);
+        this.dealCard(this.player_hand);
+        this.dealCard(this.dealer_hand);
+
+        const player_value = this.calculateHandValue(this.player_hand);
+        const dealer_value = this.calculateHandValue(this.dealer_hand);
+
+        const game_message = await message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+                MessageTemplates.blackjackMessage(
+                    username,
+                    this.player_hand,
+                    this.dealer_hand,
+                    bet_amount,
+                    this.cards,
+                    player_value,
+                    "?",
+                    true
+                )
+            ]
         });
 
-        try {
-            const filter = i => i.user.id === message.author.id;
-            const collector = gameMessage.createMessageComponentCollector({
-                filter,
-                time: 30000 // 30 seconds to make a move
-            });
+        if(player_value === 21)
+        {
+            await this.update_game_message(
+                game_message,
+                username,
+                bet_amount,
+                player_value,
+                dealer_value,
+                false
+            );
 
-            return new Promise((resolve) => {
-                collector.on('collect', async (interaction) => {
-                    try {
-                        if (interaction.customId === 'hit') {
-                            playerHand.push(this.drawCard());
-                            const playerValue = this.calculateHand(playerHand);
+            if(dealer_value === 21)
+            {
+                await this.update_result_message(
+                    game_message,
+                    username,
+                    bet_amount,
+                    player_value,
+                    dealer_value,
+                    'push'
+                );
 
-                            if (playerValue > 21) {
-                                // Disable buttons before stopping collector
-                                await interaction.update({
-                                    embeds: [MessageTemplates.blackjackEmbed(
-                                        message.author.username,
-                                        bet,
-                                        dealerHand,
-                                        playerHand,
-                                        playerValue,
-                                        true
-                                    )],
-                                    components: [this.getGameButtons(true)] // Disable buttons
-                                });
-                                collector.stop('bust');
-                                return;
-                            }
+                return {
+                    result: 'push',
+                    payout: 0,
+                    message: game_message,
+                    player_value: player_value,
+                    dealer_value: dealer_value,
+                    base_payout: 0
+                };
+            }
 
-                            await interaction.update({
-                                embeds: [MessageTemplates.blackjackEmbed(
-                                    message.author.username,
-                                    bet,
-                                    dealerHand,
-                                    playerHand,
-                                    playerValue,
-                                    true
-                                )],
-                                components: [this.getGameButtons()]
-                            });
-                        }
-                        else if (interaction.customId === 'stand') {
-                            // Disable buttons before processing dealer's turn
-                            await interaction.update({
-                                embeds: [gameEmbed],
-                                components: [this.getGameButtons(true)] // Disable buttons
-                            });
-                            collector.stop('stand');
-                        }
-                    } catch (error) {
-                        console.error('Error handling interaction:', error);
-                        collector.stop('error');
-                    }
-                });
+            const blackjack_payout = Math.floor(bet_amount * 1.5);
 
-                collector.on('end', async (collected, reason) => {
-                    let dealerValue = this.calculateHand(dealerHand);
-                    let playerValue = this.calculateHand(playerHand);
-                    let result;
-                    let winnings;
+            await this.update_result_message(
+                game_message,
+                username,
+                bet_amount,
+                player_value,
+                dealer_value,
+                'win'
+            );
 
-                    try {
-                        if (reason === 'error') {
-                            await gameMessage.edit({
-                                embeds: [MessageTemplates.errorEmbed('An error occurred during the game. Your bet has been returned.')],
-                                components: []
-                            });
-                            return resolve(0);
-                        }
+            return {
+                result: 'win',
+                payout: blackjack_payout,
+                message: game_message,
+                player_value: player_value,
+                dealer_value: dealer_value,
+                base_payout: blackjack_payout
+            };
+        }
 
-                        if (reason === 'bust') {
-                            result = 'loss';
-                            winnings = -bet;
-                        } else if (reason === 'stand') {
-                            // Dealer draws according to standard rules
-                            while (dealerValue < 17 || (dealerValue === 17 && this.isSoft17(dealerHand))) {
-                                dealerHand.push(this.drawCard());
-                                dealerValue = this.calculateHand(dealerHand);
-                            }
+        const collector = game_message.createMessageComponentCollector({
+            filter: i => i.user.id === message.author.id,
+            time: 30000
+        });
 
-                            if (dealerValue > 21 || playerValue > dealerValue) {
-                                result = 'win';
-                                winnings = bet;
-                            } else if (dealerValue > playerValue) {
-                                result = 'loss';
-                                winnings = -bet;
-                            } else {
-                                result = 'push';
-                                winnings = 0;
-                            }
-                        } else {
-                            result = 'timeout';
-                            winnings = 0;
-                        }
+        return await new Promise((resolve) =>
+        {
+            collector.on('collect', async (interaction) =>
+            {
+                await interaction.deferUpdate();
 
-                        // Update game stats before showing final result
-                        await this.updateGameStats(
-                            message.author.id,
-                            message.guild.id,
-                            bet,
-                            result,
-                            winnings
+                const hit_or_stand = interaction.customId.split('_')[1];
+
+                if(hit_or_stand === 'hit')
+                {
+                    this.dealCard(this.player_hand);
+                    const player_value = this.calculateHandValue(this.player_hand);
+
+                    if(player_value > 21)
+                    {
+                        await this.update_result_message(
+                            game_message,
+                            username,
+                            bet_amount,
+                            player_value,
+                            dealer_value,
+                            'loss'
                         );
 
-                        // Show final result
-                        await gameMessage.edit({
-                            embeds: [MessageTemplates.blackjackResultEmbed(
-                                message.author.username,
-                                bet,
-                                dealerHand,
-                                playerHand,
-                                result
-                            )],
-                            components: []
+                        collector.stop();
+                        resolve({
+                            result: 'loss',
+                            payout: -bet_amount,
+                            message: game_message,
+                            player_value: player_value,
+                            dealer_value: dealer_value,
+                            base_payout: bet_amount
                         });
-
-                        return resolve(winnings);
-                    } catch (error) {
-                        console.error('Error in game end:', error);
-                        await gameMessage.edit({
-                            embeds: [MessageTemplates.errorEmbed('An error occurred during the game. Your bet has been returned.')],
-                            components: []
-                        });
-                        return resolve(0);
                     }
-                });
+                    else if(player_value === 21)
+                    {
+                        const result = await this.stand(game_message, username, bet_amount);
+                        collector.stop();
+                        resolve(result);
+                    }
+                    else
+                    {
+                        await this.update_game_message(
+                            game_message,
+                            username,
+                            bet_amount,
+                            player_value,
+                            "?",
+                            true
+                        );
+                    }
+                }
+                else
+                {
+                    const result = await this.stand(game_message, username, bet_amount);
+                    collector.stop();
+                    resolve(result);
+                }
             });
-        } catch (error) {
-            console.error('Error in blackjack game:', error);
-            await message.reply({ 
-                embeds: [MessageTemplates.errorEmbed('An error occurred during the game. Your bet has been returned.')]
-            });
-            return 0;
-        }
+        });
     }
 }

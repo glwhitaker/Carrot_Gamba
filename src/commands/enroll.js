@@ -1,65 +1,36 @@
-import { getDatabase } from '../database/db.js';
-import { STARTING_BALANCE } from '../utils/constants.js';
-import { MessageTemplates } from '../utils/messageTemplates.js';
-import { enrollmentCache } from '../utils/enrollmentCache.js';
+import { db_manager } from '../db/db_manager.js';
+import config from '../config.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
-export async function handleEnroll(message) {
-    const db = getDatabase();
-
-    // get user information from discord message
-    const userId = message.author.id;
-    const guildId = message.guild.id;
+export async function handleEnroll(args, message)
+{
+    // get basic user info from message
+    const user_id = message.author.id;
+    const guild_id = message.guild.id;
     const username = message.author.username;
-    const currentTime = new Date().toISOString();
+    const current_time = new Date().toISOString();
 
-    try {
-        // check if the user is already enrolled
-        const existingUser = await db.get('SELECT * FROM users WHERE user_id = ? AND guild_id = ?', [userId, guildId]);
-
-        if (existingUser) {
-            return message.reply({ 
-                embeds: [MessageTemplates.balanceEmbed(
-                    username, 
-                    MessageTemplates.formatNumber(existingUser.balance)
-                )]
-            });
-        }
-
-        // existing user not found, enroll them
-        await db.run(
-            `INSERT INTO users (
-                user_id,
-                guild_id,
-                username,
-                balance,
-                enrollment_date,
-                last_message_date
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-                userId,
-                guildId,
-                username,
-                STARTING_BALANCE,
-                currentTime,
-                currentTime
-            ]
-        )
-
-        // update cache
-        enrollmentCache.set(userId, guildId, true);
-
-        return message.reply({ 
-            embeds: [MessageTemplates.successEmbed(
-                'Welcome!',
-                `You have been enrolled with ${MessageTemplates.formatNumber(STARTING_BALANCE)} carrots! 🥕`
-            )]
-        });
-
-    } catch (error) {
-        console.error('Error in enroll command:', error);
-        return message.reply({ 
-            embeds: [MessageTemplates.errorEmbed('Sorry, there was an error processing your enrollment.')]
+    const user = await db_manager.getUser(user_id, guild_id);
+    
+    if(user)
+    {
+        // if user already enrolled, return balance
+        return message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.balanceMessage(username, user.balance)],
+            files: [{
+                attachment:'src2/img/bank.png',
+                name:'image.png'
+            }]
         });
     }
     
+    // enroll the user if not there
+    await db_manager.enrollUser(user_id, guild_id, username, current_time);
+
+    return message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.successMessage('Welcome!',`You have been enrolled with **${MessageTemplates.formatNumber(config.STARTING_BALANCE)}** carrots! 🥕`)]
+    });
 }

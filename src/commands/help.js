@@ -1,43 +1,28 @@
-import { MessageTemplates } from '../utils/messageTemplates.js';
-import { getCommand, getCommandsByCategory, getAllCommands } from './index.js';
+import { MessageTemplates } from '../utils/message_templates.js';
+import { MessageFlags } from 'discord.js';
 
+export async function handleHelp(args, message, usage)
+{
+    const reply = await message.reply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [MessageTemplates.helpMessage('economy')]
+    });
 
-export async function handleHelp(message, args) {
-    try {
-        // case 1: no args, show all commands by category
-        if (args.length === 0) {
-            return message.reply({
-                embeds: [MessageTemplates.helpEmbed()]
-            });
-        }
+    const collector = reply.createMessageComponentCollector({
+        filter: i => i.user.id === message.author.id && i.customId === 'help_category_select',
+        time: 30000
+    });
 
-        const query = args[0].toLowerCase();
+    collector.on('collect', async (interaction) =>
+    {
+        // confirm interaction
+        await interaction.deferUpdate();
 
-        // case 2: help for specific category
-        const categories = getCommandsByCategory();
-        if (categories[query]) {
-            return message.reply({
-                embeds: [MessageTemplates.categoryHelpEmbed(query, categories[query])]
-            });
-        }
+        const selected_category = interaction.values[0];
 
-        // case 3: help for a specific command
-        const command = getCommand(query);
-        if (command) {
-            return message.reply({
-                embeds: [MessageTemplates.commandHelpEmbed(query, command)]
-            });
-        }
-
-        // query not found
-        return message.reply({
-            embeds: [MessageTemplates.errorEmbed(`No command or category found for "${query}". Use \`${COMMAND_PREFIX}help\` to see all available commands and categories.`)]
+        await interaction.editReply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.helpMessage(selected_category)]
         });
-
-    } catch (error) {
-        console.error('Error displaying help:', error);
-        return message.reply({ 
-            embeds: [MessageTemplates.errorEmbed('Sorry, there was an error displaying the help menu.')]
-        });
-    }
+    });
 }
