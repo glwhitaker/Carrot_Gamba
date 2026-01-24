@@ -146,7 +146,7 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'lc', 1);
 
-        modified_result.payout = modified_result.payout * 0.5;
+        modified_result.payout = Math.floor(modified_result.payout * 0.5);
         result_array.push({label: 'Loss Cushion', calc: 'x 0.5'})
     }
 

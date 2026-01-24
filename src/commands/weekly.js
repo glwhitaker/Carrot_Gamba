@@ -22,14 +22,14 @@ export async function handleWeekly(args, message)
             // update last claim in db
             await db_manager.updateLastWeeklyClaim(user_id, guild_id, current_time.toISOString());
 
-            // award daily gift
+            // award weekly gift
             await db_manager.updateUserBalance(user_id, guild_id, config.WEEKLY_AMOUNT);
 
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.weeklyRewardMessage(username, config.WEEKLY_AMOUNT)],
                 files: [{
-                    attachment:'src2/img/gift.png',
+                    attachment:'src/img/gift.png',
                     name:'gift.png'
                 }]
             });
@@ -47,7 +47,7 @@ export async function handleWeekly(args, message)
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.weeklyCooldownMessage(days_remaining, hours_remaining, minutes_remaining)],
                 files: [{
-                    attachment:'src2/img/clock.png',
+                    attachment:'src/img/clock.png',
                     name:'clock.png'
                 }]
             });

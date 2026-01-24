@@ -11,7 +11,8 @@ class ItemManager
                 "desc": "Grants a second chance on your next lost bet, giving you another opportunity to win the same amount.",
                 "icon": "🌀",
                 "price": 5000,
-                "max_uses": 1
+                "max_uses": 1,
+                "reward_tier": 1
             },
             "lc": {
                 "key": "lc",
@@ -19,7 +20,8 @@ class ItemManager
                 "desc": "Reduces the amount lost on your next failed bet by 50%.",
                 "icon": "🛡️",
                 "price": 3000,
-                "max_uses": 1
+                "max_uses": 1,
+                "reward_tier": 1
             },
             "jj": {
                 "key": "jj",
@@ -27,7 +29,8 @@ class ItemManager
                 "desc": "Doubles your winnings on your next successful game.",
                 "icon": "💰",
                 "price": 10000,
-                "max_uses": 1
+                "max_uses": 1,
+                "reward_tier": 3
             },
             "cs": {
                 "key": "cs",
@@ -35,7 +38,8 @@ class ItemManager
                 "desc": "Lasts for 5 games. If you win any of them, you earn +10% carrots on top of your winnings.",
                 "icon": "⚡",
                 "price": 2000,
-                "max_uses": 5
+                "max_uses": 5,
+                "reward_tier": 2
             },
             "no": {
                 "key": "no",
@@ -43,11 +47,26 @@ class ItemManager
                 "desc": "Highlights 5 numbers in Number Guess. The winning number is guaranteed to be among them.",
                 "icon": "🔮",
                 "price": 10000,
-                "max_uses": 1
+                "max_uses": 1,
+                "reward_tier": 3
+            },
+            "xrv": {
+                "key": "xrv",
+                "name": "X-Ray Vision",
+                "desc": "Reveals the dealer's hidden card in Blackjack.",
+                "icon": "👓",
+                "price": 7000,
+                "max_uses": 1,
+                "reward_tier": 2
             }
-        }
+        };
 
         this.current_items_activated = {};
+    }
+
+    getItems()
+    {
+        return this.items;
     }
 
     getItem(item_key)

@@ -368,9 +368,8 @@ export class MessageTemplates
         const bar_length = 27;
         const filled_length = Math.floor((current_xp / required_xp) * bar_length);
         const empty_length = bar_length - filled_length;
-
-        const filled_bar = '▰'.repeat(filled_length);
-        const empty_bar = '▱'.repeat(empty_length);
+        const filled_bar = '▰'.repeat(filled_length > 0 ? filled_length : 0);
+        const empty_bar = '▱'.repeat(empty_length > 0 ? empty_length : 0);
         const xp_string = level < config.MAX_LEVEL ? `${this.formatNumber(current_xp)} / ${this.formatNumber(required_xp)} XP` : 'MAX LEVEL';
 
         const xp_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n\u001b[1mLEVEL ${level}\u001b[0m\n${filled_bar}${empty_bar}\n${xp_string}\`\`\``);
@@ -442,7 +441,7 @@ export class MessageTemplates
 
         const passive_mult = '+' + user.progression.passive_multiplier + '%';
         const user_table = [
-            rowTemplate('\u001b[1mPassive Carrot Multiplier:\u001b[0m', passive_mult)
+            rowTemplate('\u001b[1mPassive Carrot Gain:\u001b[0m', passive_mult)
         ].join('\n');
 
         const stats_table = [
@@ -619,7 +618,7 @@ export class MessageTemplates
         return container;
     }
 
-    static helpMessage(selection)
+    static helpMessage(selection, info)
     {
         // list all commands by category along with description, usage, and aliases
         const spacer = new SeparatorBuilder().setDivider(false);
@@ -642,7 +641,7 @@ export class MessageTemplates
         }
         const action_row = new ActionRowBuilder().addComponents(string_select);
 
-        let command_list = '';
+        let command_list = '## Commands\n';
         const commands = command_manager.getCommandsByCategory(selection);
         for(const command in commands)
         {
@@ -658,7 +657,14 @@ export class MessageTemplates
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addActionRowComponents(action_row)
-        .addSeparatorComponents(spacer)
+
+        if(info[selection])
+        {
+            const info_field = new TextDisplayBuilder().setContent(`## Info\n>>> ${info[selection].how_it_works}\n\n${info[selection].example}`);
+            container.addTextDisplayComponents(info_field);
+        }
+
+        container
         .addTextDisplayComponents(commands_field)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
@@ -693,7 +699,7 @@ export class MessageTemplates
         let rank = 1;
         for(const entry of board)
         {
-            const rank_str = rank == 1 ? '🥇' : rank == 2 ? '🥈' : rank == 3 ? '🥉' : rank.toString();
+            const rank_str = rank == 1 ? '🥇' : rank == 2 ? '🥈' : rank == 3 ? '🥉' : " "+ rank.toString();
 
             // get only first 14 characters of username
             const display_name = entry.username.length > 14 ? entry.username.substring(0, 14) + '...' : entry.username;
@@ -703,6 +709,8 @@ export class MessageTemplates
             const balance = this.formatNumber(entry[selection]) + ' 🥕';
             
             table_content += rowTemplate(rank_str, combined_name, balance) + '\n';
+
+            rank++;
         }
 
         const table_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n${table_header}\n${separator_line}\n${table_content}\`\`\``);
@@ -722,7 +730,7 @@ export class MessageTemplates
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent('# Item Inventory');
-        const hint = new TextDisplayBuilder().setContent('>>> Type `^use <code>` to use an item from your inventory.');
+        const hint = new TextDisplayBuilder().setContent('>>> Type `^use <code>` to activate an item from your inventory.');
 
         // show item name, code, quantity
         const name_width = 25;
@@ -784,7 +792,7 @@ export class MessageTemplates
         const header = new TextDisplayBuilder().setContent(`# Blackjack`);
         const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
 
-        let dealer_cards_string = `### Dealer Hand (${dealer_value})\n# `;
+        let dealer_cards_string = `### Dealer Hand (${hide ? "?" : dealer_value})\n# `;
         for(let i = 0; i < dealer_hand.length; i++)
         {
             if(hide && dealer_hand.length === 2 && i === 1)

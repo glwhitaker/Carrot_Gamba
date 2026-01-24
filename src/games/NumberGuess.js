@@ -18,8 +18,7 @@ export class NumberGuess extends Game
         const username = message.author.username;
 
         // generate a number 1 to 10
-        // const winning_number = Math.floor(Math.random() * this.max_number) + 1;
-        const winning_number = 1;
+        const winning_number = Math.floor(Math.random() * this.max_number) + 1;
         
         // if number oracle item used, choose 4 random numbers
         const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);

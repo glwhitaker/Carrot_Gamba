@@ -16,7 +16,7 @@ export async function handleBalance(args, message)
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.balanceMessage(username, balance)],
             files: [{
-                attachment:'src2/img/bank.png',
+                attachment:'src/img/bank.png',
                 name:'image.png'
             }]
         });

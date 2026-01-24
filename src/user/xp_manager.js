@@ -6,13 +6,9 @@ class XPManager
 {
     calculateXP(user, bet_amount, result)
     {
-        const clamp = function(num, min, max)
-        {
-            return Math.max(min, Math.min(max, num));
-        }
         // calculate xp gain
-        const risk = Math.pow(bet_amount / user.balance, 0.75);
-        const magnitude = Math.pow(bet_amount / config.BASE_BET, 0.35);
+        const risk = Math.pow(bet_amount / user.balance, 0.8);
+        const magnitude = Math.pow(bet_amount / config.BASE_BET, 0.275);
         const combined = config.XP_A * risk + (1 - config.XP_A) * magnitude;
         const raw_xp = config.BASE_XP * combined;
         const xp = Math.floor(raw_xp * (result === 'win' ? config.WIN_MULTIPLIER : config.LOSS_MULTIPLIER));
@@ -26,15 +22,48 @@ class XPManager
         return req;
     }
 
+    getEligibleItems(level)
+    {
+        const TIER_UNLOCKS = {
+            1: 1,
+            2: 10,
+            3: 25
+        };
+        return Object.values(item_manager.getItems()).filter(item =>
+            level >= TIER_UNLOCKS[item.reward_tier]
+        );
+    }
+
+    calculateItemAmount(item, level)
+    {
+        const base = Math.max(1, Math.floor(level / (item.reward_tier * 10)));
+        return Math.min(base, item.max_uses * 2);
+    }
+
     getLevelRewards(level)
     {
         const rewards = [];
-        rewards.push({key: 'carrots', amount: level * 1000});
-        rewards.push({key: 'sc', amount: 50});
-        rewards.push({key: 'lc', amount: 50});
-        rewards.push({key: 'jj', amount: 50});
-        rewards.push({key: 'cs', amount: 50});
-        rewards.push({key: 'no', amount: 50});
+
+        rewards.push({
+            key: 'carrots',
+            amount: Math.floor(level * 1000)
+        });
+
+        const eligible_items = this.getEligibleItems(level);
+
+        for(const item of eligible_items)
+        {
+            const amount = this.calculateItemAmount(item, level);
+
+            if(amount > 0)
+            {
+                rewards.push({
+                    key: item.key,
+                    amount: amount
+                });
+            }
+        }
+
         return rewards;
     }
 

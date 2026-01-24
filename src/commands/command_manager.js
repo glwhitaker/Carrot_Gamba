@@ -104,7 +104,7 @@ class CommandManager
                 use:
                 {
                     execute: handleUse,
-                    description: 'Use an item from your inventory',
+                    description: 'Activate an item from your inventory',
                     usage: '^use <code>',
                     aliases: []
                 }

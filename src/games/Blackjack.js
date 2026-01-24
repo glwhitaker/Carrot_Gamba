@@ -1,6 +1,7 @@
 import { Game } from './Game.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { item_manager } from '../items/item_manager.js';
 
 export class Blackjack extends Game
 {
@@ -278,6 +279,15 @@ export class Blackjack extends Game
         const player_value = this.calculateHandValue(this.player_hand);
         const dealer_value = this.calculateHandValue(this.dealer_hand);
 
+        // if x-ray vision item used, reveal dealer's hidden card
+        let hide_dealer = true;
+        const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(active_items['xrv'])
+        {
+            hide_dealer = false;
+            await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'xrv', 1);
+        }
+
         const game_message = await message.reply({
             flags: MessageFlags.IsComponentsV2,
             components: [
@@ -288,8 +298,8 @@ export class Blackjack extends Game
                     bet_amount,
                     this.cards,
                     player_value,
-                    "?",
-                    true
+                    dealer_value,
+                    hide_dealer
                 )
             ]
         });
@@ -399,8 +409,8 @@ export class Blackjack extends Game
                             username,
                             bet_amount,
                             player_value,
-                            "?",
-                            true
+                            dealer_value,
+                            hide_dealer
                         );
                     }
                 }

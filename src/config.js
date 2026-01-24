@@ -6,13 +6,13 @@ const config =
     "DAILY_AMOUNT": 1000,
     "WEEKLY_COOLDOWN_MS": 7 * 24 * 60 * 60 * 1000,
     "WEEKLY_AMOUNT": 10000,
-    "XP_A": 0.6,
+    "XP_A": 0.7,
     "BASE_XP": 30,
     "BASE_BET": 1000,
     "WIN_MULTIPLIER": 1.2,
     "LOSS_MULTIPLIER": 0.8,
     "BASE_REQ_XP": 100,
-    "XP_EXPONENT": 1.2,
+    "XP_EXPONENT": 1.05,
     "MAX_LEVEL": 100,
     "MESSAGE":
     {

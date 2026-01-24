@@ -675,6 +675,9 @@ class DBManager
             const user = await this.getUser(entry.user_id, guild_id);
             board.push(user);
         }
+
+        // re-sort to ensure correct order (may be off due to cache)
+        board.sort((a, b) => b.balance - a.balance);
         return board;
     }
 
@@ -695,6 +698,9 @@ class DBManager
             const user = await this.getUser(entry.user_id, guild_id);
             board.push(user);
         }
+
+        // re-sort to ensure correct order (may be off due to cache)
+        board.sort((a, b) => b.highest_balance - a.highest_balance);
         return board;
     }
 }
