@@ -91,6 +91,13 @@ export async function handleGamba(args, message, usage)
         await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);
         await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
 
+        // debug test rewards for all levels
+        for(let lvl=1; lvl<=100; lvl++)
+        {
+            const rewards = xp_manager.getLevelRewards(lvl);
+            console.log(`Level ${lvl} rewards: `, rewards);
+        }
+
         const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
         // send user message instead of reply to message
         if(lvl_up)
@@ -131,32 +138,41 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
     const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
 
     // first check for second chance token
-    if(active_items['sc'] && result.result === 'loss')
+    if(active_items['sc'])
     {
-        await sendItemMessage(user, 'sc', message);
-        // give user a second chance
-        const second_chance_result = await game.play(user, message, bet_amount, 'sc');
-        modified_result = second_chance_result;
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'sc', 1);
+
+        if(result.result === 'loss')
+        {
+            await sendItemMessage(user, 'sc', message);
+            // give user a second chance
+            const second_chance_result = await game.play(user, message, bet_amount, 'sc');
+            modified_result = second_chance_result;
+        }
     }
 
-    if(active_items['lc'] && modified_result.result === 'loss')
+    if(active_items['lc'])
     {
+        if(modified_result.result === 'loss')
+        {
+            modified_result.payout = Math.floor(modified_result.payout * 0.5);
+            result_array.push({label: 'Loss Cushion', calc: 'x 0.5'})
+        }
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'lc', 1);
-
-        modified_result.payout = Math.floor(modified_result.payout * 0.5);
-        result_array.push({label: 'Loss Cushion', calc: 'x 0.5'})
     }
 
     // then apply win modifiers
-    if(active_items['jj'] && modified_result.result === 'win')
+    if(active_items['jj'])
     {
-        modified_result.payout = modified_result.payout * 2;
+        if(modified_result.result === 'win')
+        {
+            modified_result.payout = modified_result.payout * 2;
+            result_array.push({label: 'Jackpot Juice', calc: 'x 2'});
+        }
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'jj', 1);
-        result_array.push({label: 'Jackpot Juice', calc: 'x 2'})
     }
 
     if(active_items['cs'])

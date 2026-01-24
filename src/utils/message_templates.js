@@ -124,6 +124,19 @@ export class MessageTemplates
         return ' '.repeat(target_length - len) + string;
     }
 
+    static getActiveItemsHeader(active_items)
+    {
+        let header_string = '-# ';
+        for(const item_key in active_items)
+        {
+            const item = item_manager.getItem(item_key);
+            header_string += `${item.icon} `;
+        }
+        return {
+            content: header_string
+        }
+    }
+
     // regular error
     static errorMessage(message)
     {
@@ -294,15 +307,25 @@ export class MessageTemplates
         return container;
     }
 
-    static coinTossMessage(username, amount, frame)
+    static coinTossMessage(user, amount, frame)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# Coin Toss`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(amount)}** 🥕`);
         const coin = new TextDisplayBuilder().setContent(`# ═══════    ${frame ? frame : '🪙'}    ═══════`);
 
-        const container = new ContainerBuilder()
-        .setAccentColor(COLORS.GOLD)
+        let container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+        
+        container
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)
@@ -313,16 +336,26 @@ export class MessageTemplates
         return container;
     }
 
-    static coinTossResultMessage(username, bet_amount, result)
+    static coinTossResultMessage(user, bet_amount, result)
     {
         const won = result === 'win';
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# ${won ? 'You Win!' : 'You Lose!'}`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
         const coin = new TextDisplayBuilder().setContent(`#  ═══════    🪙    ═══════`);
 
-        const container = new ContainerBuilder()
-        .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR)
+        let container = new ContainerBuilder()
+        .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+
+        container
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)
@@ -518,12 +551,12 @@ export class MessageTemplates
         return cont_obj;
     }
 
-    static numberGuessMessage(username, bet_amount, min_number, max_number, hinted_numbers, disabled)
+    static numberGuessMessage(user, bet_amount, min_number, max_number, hinted_numbers, disabled)
     {
         const multiplier = max_number;
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# Number Guess`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
 
         // number of action rows needed (can have max 5 buttons per row)
         const total_numbers = max_number - min_number + 1;
@@ -556,8 +589,18 @@ export class MessageTemplates
             action_rows.push(action_row);
         }
 
-        const container = new ContainerBuilder()
-        .setAccentColor(COLORS.GOLD)
+        let container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+
+        container
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)
@@ -568,12 +611,12 @@ export class MessageTemplates
         return container;
     }
 
-    static numberGuessResultMessage(username, bet_amount, min_number, max_number, result)
+    static numberGuessResultMessage(user, bet_amount, min_number, max_number, result)
     {
         const won = result.result === 'win';
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# ${won ? 'You Win!' : 'You Lose!'}`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
 
         // number of action rows needed (can have max 5 buttons per row)
         const total_numbers = max_number - min_number + 1;
@@ -606,8 +649,18 @@ export class MessageTemplates
             action_rows.push(action_row);
         }
 
-        const container = new ContainerBuilder()
-        .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR)
+        let container = new ContainerBuilder()
+        .setAccentColor(won ? COLORS.SUCCESS : COLORS.ERROR);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+
+        container
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)
@@ -748,7 +801,7 @@ export class MessageTemplates
         {
             const active_name = item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name;
             const active_code = item.key;
-            const uses = item.key === 'cs' ? Math.floor(item.quantity / 5) : item.quantity;
+            const uses = item.key === 'cs' ? Math.ceil(item.quantity / 5) : item.quantity;
             const active_quantity = this.colorLevelText(`x${uses}`, 1)
 
             active_content += rowTemplate(active_name, active_code, active_quantity) + '\n';
@@ -786,12 +839,11 @@ export class MessageTemplates
         return container;
     }
 
-    static blackjackMessage(username, player_hand, dealer_hand, bet_amount, cards, player_value, dealer_value, hide)
+    static blackjackMessage(user, player_hand, dealer_hand, bet_amount, cards, player_value, dealer_value, hide)
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# Blackjack`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
-
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
         let dealer_cards_string = `### Dealer Hand (${hide ? "?" : dealer_value})\n# `;
         for(let i = 0; i < dealer_hand.length; i++)
         {
@@ -828,8 +880,18 @@ export class MessageTemplates
 
         const action_row = new ActionRowBuilder().addComponents(hit_button, stand_button);
 
-        const container = new ContainerBuilder()
-        .setAccentColor(COLORS.GOLD)
+        let container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+
+        container
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)
@@ -844,12 +906,12 @@ export class MessageTemplates
         return container;
     }
 
-    static blackjackResultMessage(username, player_hand, dealer_hand, bet_amount, player_value, dealer_value, result)
+    static blackjackResultMessage(user, player_hand, dealer_hand, bet_amount, player_value, dealer_value, result)
     {
         const res_text = result === 'win' ? 'You Win!' : result === 'loss' ? 'You Lose!' : 'Push!';
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent(`# ${res_text}`);
-        const p = new TextDisplayBuilder().setContent(`>>> **${username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
 
         let dealer_cards_string = `### Dealer Hand (${dealer_value})\n# `;
         for(const card of dealer_hand)
@@ -880,8 +942,18 @@ export class MessageTemplates
 
         const action_row = new ActionRowBuilder().addComponents(hit_button, stand_button);
 
-        const container = new ContainerBuilder()
-        .setAccentColor(result === 'win' ? COLORS.SUCCESS : result === 'loss' ? COLORS.ERROR : COLORS.WARNING)
+        let container = new ContainerBuilder()
+        .setAccentColor(result === 'win' ? COLORS.SUCCESS : result === 'loss' ? COLORS.ERROR : COLORS.WARNING);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+
+        container
         .addTextDisplayComponents(header)
         .addTextDisplayComponents(p)
         .addSeparatorComponents(spacer)

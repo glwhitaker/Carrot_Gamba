@@ -127,13 +127,13 @@ export class Blackjack extends Game
         return value;
     }
 
-    async update_game_message(game_message, username, bet_amount, player_value, dealer_value, hide_dealer)
+    async update_game_message(game_message, user, bet_amount, player_value, dealer_value, hide_dealer)
     {
         await game_message.edit({
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.blackjackMessage(
-                    username,
+                    user,
                     this.player_hand,
                     this.dealer_hand,
                     bet_amount,
@@ -146,13 +146,13 @@ export class Blackjack extends Game
         });
     }
 
-    async update_result_message(game_message, username, bet_amount, player_value, dealer_value, result)
+    async update_result_message(game_message, user, bet_amount, player_value, dealer_value, result)
     {
         await game_message.edit({
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.blackjackResultMessage(
-                    username,
+                    user,
                     this.player_hand,
                     this.dealer_hand,
                     bet_amount,
@@ -169,7 +169,7 @@ export class Blackjack extends Game
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    async stand(game_message, username, bet_amount)
+    async stand(game_message, user, bet_amount)
     {
         let res = {};
 
@@ -178,7 +178,7 @@ export class Blackjack extends Game
 
         await this.update_game_message(
             game_message,
-            username,
+            user,
             bet_amount,
             player_value,
             dealer_value,
@@ -194,7 +194,7 @@ export class Blackjack extends Game
 
             await this.update_game_message(
                 game_message,
-                username,
+                user,
                 bet_amount,
                 player_value,
                 dealer_value,
@@ -206,7 +206,7 @@ export class Blackjack extends Game
         {
             await this.update_result_message(
                 game_message,
-                username,
+                user,
                 bet_amount,
                 player_value,
                 dealer_value,
@@ -226,7 +226,7 @@ export class Blackjack extends Game
         {
             await this.update_result_message(
                 game_message,
-                username,
+                user,
                 bet_amount,
                 player_value,
                 dealer_value,
@@ -246,7 +246,7 @@ export class Blackjack extends Game
         {
             await this.update_result_message(
                 game_message,
-                username,
+                user,
                 bet_amount,
                 player_value,
                 dealer_value,
@@ -285,14 +285,13 @@ export class Blackjack extends Game
         if(active_items['xrv'])
         {
             hide_dealer = false;
-            await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'xrv', 1);
         }
 
         const game_message = await message.reply({
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.blackjackMessage(
-                    username,
+                    user,
                     this.player_hand,
                     this.dealer_hand,
                     bet_amount,
@@ -308,7 +307,7 @@ export class Blackjack extends Game
         {
             await this.update_game_message(
                 game_message,
-                username,
+                user,
                 bet_amount,
                 player_value,
                 dealer_value,
@@ -319,12 +318,15 @@ export class Blackjack extends Game
             {
                 await this.update_result_message(
                     game_message,
-                    username,
+                    user,
                     bet_amount,
                     player_value,
                     dealer_value,
                     'push'
                 );
+
+                if(active_items['xrv'])
+                    await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'xrv', 1);
 
                 return {
                     result: 'push',
@@ -340,12 +342,15 @@ export class Blackjack extends Game
 
             await this.update_result_message(
                 game_message,
-                username,
+                user,
                 bet_amount,
                 player_value,
                 dealer_value,
                 'win'
             );
+
+            if(active_items['xrv'])
+                    await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'xrv', 1);
 
             return {
                 result: 'win',
@@ -362,7 +367,7 @@ export class Blackjack extends Game
             time: 30000
         });
 
-        return await new Promise((resolve) =>
+        const result = await new Promise((resolve) =>
         {
             collector.on('collect', async (interaction) =>
             {
@@ -379,7 +384,7 @@ export class Blackjack extends Game
                     {
                         await this.update_result_message(
                             game_message,
-                            username,
+                            user,
                             bet_amount,
                             player_value,
                             dealer_value,
@@ -398,7 +403,7 @@ export class Blackjack extends Game
                     }
                     else if(player_value === 21)
                     {
-                        const result = await this.stand(game_message, username, bet_amount);
+                        const result = await this.stand(game_message, user, bet_amount);
                         collector.stop();
                         resolve(result);
                     }
@@ -406,7 +411,7 @@ export class Blackjack extends Game
                     {
                         await this.update_game_message(
                             game_message,
-                            username,
+                            user,
                             bet_amount,
                             player_value,
                             dealer_value,
@@ -416,11 +421,17 @@ export class Blackjack extends Game
                 }
                 else
                 {
-                    const result = await this.stand(game_message, username, bet_amount);
+                    const result = await this.stand(game_message, user, bet_amount);
+
                     collector.stop();
                     resolve(result);
                 }
             });
         });
+
+        if(active_items['xrv'])
+            await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'xrv', 1);
+        
+        return result;
     }
 }

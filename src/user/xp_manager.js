@@ -36,8 +36,8 @@ class XPManager
 
     calculateItemAmount(item, level)
     {
-        const base = Math.max(1, Math.floor(level / (item.reward_tier * 10)));
-        return Math.min(base, item.max_uses * 2);
+        const base = Math.max(1, Math.ceil(level / (item.reward_tier * 10)));
+        return base;
     }
 
     getLevelRewards(level)

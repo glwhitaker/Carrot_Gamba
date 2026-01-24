@@ -7,9 +7,9 @@ export async function handleHelp(args, message, usage)
         items: {
             how_it_works: 'Items can be used to gain temporary advantages in games, enhance your earnings, ' +
             'or protect yourself from losses. Activating an item will consume it from your inventory ' +
-            'and will be added to your active items list. Active items provide their benefits automatically when applicable.',
-            example: 'For example, say you activate a **Second Chance Token**. Upon your next loss, the ' +
-            'token will be used automatically, providing you with a second chance to win without losing your bet.'
+            'and will be added to your active items list. Active items provide their benefits automatically if applicable.',
+            example: 'For example, say you activate a **Second Chance Token**. If you lose your next game, the ' +
+            'token will be triggered automatically, providing you with a second chance to win without losing your bet.'
         }
     }
     

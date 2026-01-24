@@ -33,15 +33,12 @@ export class NumberGuess extends Game
             }
             // add winning number to hinted numbers
             hinted_numbers.push(winning_number);
-
-            // consume item
-            await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'no', 1);
         }
 
         // show initial message prompting user to choose a number
         const game_message = await message.reply({
             flags: MessageFlags.IsComponentsV2,
-            components: [MessageTemplates.numberGuessMessage(username, bet_amount, this.min_number, this.max_number, hinted_numbers, false)]
+            components: [MessageTemplates.numberGuessMessage(user, bet_amount, this.min_number, this.max_number, hinted_numbers, false)]
         });
 
         // create collector for button interaction
@@ -67,7 +64,7 @@ export class NumberGuess extends Game
                 game_message.edit({
                     flags: MessageFlags.IsComponentsV2,
                     components: [
-                        MessageTemplates.numberGuessResultMessage(username, bet_amount, this.min_number, this.max_number, temp_res)
+                        MessageTemplates.numberGuessResultMessage(user, bet_amount, this.min_number, this.max_number, temp_res)
                     ]
                 });
 
@@ -76,6 +73,12 @@ export class NumberGuess extends Game
             });
         });
 
+        if(active_items['no'])
+        {
+            // consume item
+            await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'no', 1);
+        }
+        
         return result;
     }
 }

@@ -24,7 +24,7 @@ export class CoinToss extends Game
         // send initial message that game has started
         const game_message = await message.reply({
             flags: MessageFlags.IsComponentsV2,
-            components: [MessageTemplates.coinTossMessage(username, bet_amount)]
+            components: [MessageTemplates.coinTossMessage(user, bet_amount)]
         });
 
         // animate coin toss
@@ -32,7 +32,7 @@ export class CoinToss extends Game
             await new Promise(resolve => setTimeout(resolve, 500));
             await game_message.edit({
                 flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.coinTossMessage(username, bet_amount, frame)]
+                components: [MessageTemplates.coinTossMessage(user, bet_amount, frame)]
             });
         }
 
@@ -40,7 +40,7 @@ export class CoinToss extends Game
         await game_message.edit({
             flags: MessageFlags.IsComponentsV2,
             components: [
-                MessageTemplates.coinTossResultMessage(username, bet_amount, result)
+                MessageTemplates.coinTossResultMessage(user, bet_amount, result)
             ]
         });
 

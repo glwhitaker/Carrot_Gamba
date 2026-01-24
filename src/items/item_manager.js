@@ -8,16 +8,16 @@ class ItemManager
             "sc" : {
                 "key": "sc",
                 "name": "Second Chance Token",
-                "desc": "Grants a second chance on your next lost bet, giving you another opportunity to win the same amount.",
+                "desc": "Lasts 1 game. Grants a second chance if you lose, giving you another opportunity to win the same amount.",
                 "icon": "🌀",
                 "price": 5000,
                 "max_uses": 1,
-                "reward_tier": 1
+                "reward_tier": 2
             },
             "lc": {
                 "key": "lc",
                 "name": "Loss Cushion",
-                "desc": "Reduces the amount lost on your next failed bet by 50%.",
+                "desc": "Lasts 1 game. If you lose, reduces your loss by 50%.",
                 "icon": "🛡️",
                 "price": 3000,
                 "max_uses": 1,
@@ -26,11 +26,11 @@ class ItemManager
             "jj": {
                 "key": "jj",
                 "name": "Jackpot Juice",
-                "desc": "Doubles your winnings on your next successful game.",
+                "desc": "Lasts 1 game. If you win, doubles your winnings.",
                 "icon": "💰",
                 "price": 10000,
                 "max_uses": 1,
-                "reward_tier": 3
+                "reward_tier": 2
             },
             "cs": {
                 "key": "cs",
@@ -39,25 +39,25 @@ class ItemManager
                 "icon": "⚡",
                 "price": 2000,
                 "max_uses": 5,
-                "reward_tier": 2
+                "reward_tier": 1
             },
             "no": {
                 "key": "no",
                 "name": "Number Oracle",
-                "desc": "Highlights 5 numbers in Number Guess. The winning number is guaranteed to be among them.",
+                "desc": "Lasts 1 game. Highlights 5 numbers in Number Guess. The winning number is guaranteed to be among them.",
                 "icon": "🔮",
                 "price": 10000,
                 "max_uses": 1,
-                "reward_tier": 3
+                "reward_tier": 2
             },
             "xrv": {
                 "key": "xrv",
                 "name": "X-Ray Vision",
-                "desc": "Reveals the dealer's hidden card in Blackjack.",
+                "desc": "Lasts 1 game. Reveals the dealer's hidden card in Blackjack.",
                 "icon": "👓",
                 "price": 7000,
                 "max_uses": 1,
-                "reward_tier": 2
+                "reward_tier": 1
             }
         };
 
@@ -88,7 +88,7 @@ class ItemManager
         return user_items;
     }
 
-    async getActiveItemsForUser(user_id, guild_id)
+    getActiveItemsForUser(user_id, guild_id)
     {
         return this.current_items_activated[`${guild_id}-${user_id}`] || {};
     }
