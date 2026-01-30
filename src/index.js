@@ -71,10 +71,10 @@ client.once('clientReady', () =>
 
     client.user.setPresence(
     {
-        status: 'dnd',
+        status: 'active',
         activities: [
             {
-                name: "Maintenance mode"
+                name: "gamba gamba gamba"
             }
         ]
     });

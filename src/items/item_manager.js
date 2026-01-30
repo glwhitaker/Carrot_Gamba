@@ -1,4 +1,5 @@
 import { db_manager } from "../db/db_manager.js";
+import config from "../config.js";
 
 class ItemManager
 {
@@ -8,11 +9,11 @@ class ItemManager
             "sc" : {
                 "key": "sc",
                 "name": "Second Chance Token",
-                "desc": "Lasts 1 game. Grants a second chance if you lose, giving you another opportunity to win the same amount.",
+                "desc": "Lasts 1 game. Grants a second chance if you lose, but if you win on the second chance, your winnings are halved.",
                 "icon": "🌀",
                 "price": 5000,
                 "max_uses": 1,
-                "reward_tier": 2
+                "tier": 3
             },
             "lc": {
                 "key": "lc",
@@ -21,7 +22,7 @@ class ItemManager
                 "icon": "🛡️",
                 "price": 3000,
                 "max_uses": 1,
-                "reward_tier": 1
+                "tier": 1
             },
             "jj": {
                 "key": "jj",
@@ -30,7 +31,7 @@ class ItemManager
                 "icon": "💰",
                 "price": 10000,
                 "max_uses": 1,
-                "reward_tier": 2
+                "tier": 2
             },
             "cs": {
                 "key": "cs",
@@ -39,7 +40,7 @@ class ItemManager
                 "icon": "⚡",
                 "price": 2000,
                 "max_uses": 5,
-                "reward_tier": 1
+                "tier": 1
             },
             "no": {
                 "key": "no",
@@ -48,7 +49,7 @@ class ItemManager
                 "icon": "🔮",
                 "price": 10000,
                 "max_uses": 1,
-                "reward_tier": 2
+                "tier": 2
             },
             "xrv": {
                 "key": "xrv",
@@ -57,9 +58,17 @@ class ItemManager
                 "icon": "👓",
                 "price": 7000,
                 "max_uses": 1,
-                "reward_tier": 1
+                "tier": 2
             }
         };
+
+        this.boxes = config.ITEMS.BOXES;
+        this.tiers = config.ITEMS.TIERS;
+
+        for(let i = 0; i < 5; i++)
+        {
+            let res = this.rollCrate(`c${i+1}`);
+        }
 
         this.current_items_activated = {};
     }
@@ -72,6 +81,19 @@ class ItemManager
     getItem(item_key)
     {
         return this.items[item_key];
+    }
+
+    getCrate(crate_key)
+    {
+        return this.boxes[crate_key];
+    }
+
+    async giveCrateToUser(user_id, guild_id, crate_key, quantity)
+    {
+        if(!quantity)
+            quantity = 1;
+        const crate = this.boxes[crate_key];
+        await db_manager.addItemToUserInventory(user_id, guild_id, crate, quantity);
     }
 
     async giveItemToUser(user_id, guild_id, item_key, quantity)
@@ -117,6 +139,50 @@ class ItemManager
 
         // remove item from user's inventory
         await db_manager.removeItemFromUserInventory(user_id, guild_id, item_key, quantity);
+    }
+
+    rollCrate(crate_key)
+    {
+        const crate = this.boxes[crate_key];
+        const results = [];
+
+        for(let i = 0; i < crate.rolls; i++)
+        {
+            // roll for tier
+            const tier = this.rollTier(crate);
+
+            // roll for item in tier
+            const tier_config = this.tiers[tier];
+            const item_key = this.rollItemFromTier(tier_config);
+
+            results.push(item_key);
+        }
+
+        return results;
+    }
+
+    rollTier(crate_config)
+    {
+        return this.weightedRoll(crate_config.tier_weights);
+    }
+
+    rollItemFromTier(tier_config)
+    {
+        return this.weightedRoll(tier_config.items);
+    }
+
+    weightedRoll(weight_map)
+    {
+        const entries = Object.entries(weight_map);
+        const total_weight = entries.reduce((sum, [, value]) => sum + value, 0);
+        let roll = Math.floor(Math.random() * total_weight) + 1;
+
+        for(const [key, weight] of entries)
+        {
+            if(roll <= weight)
+                return key;
+            roll -= weight;
+        }
     }
 }
 

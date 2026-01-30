@@ -375,10 +375,13 @@ export class MessageTemplates
         let rewards_string = "";
         for(const reward of rewards)
         {
-            rewards_string += `\n+ ${this.formatNumber(reward.amount)} ${reward.key === 'carrots' ? '🥕' : item_manager.getItem(reward.key).name}`;
+            if(reward.key === 'carrots')
+                rewards_string += `\n+ ${this.formatNumber(reward.amount)} 🥕`;
+            else
+                rewards_string += `\n+ ${this.colorLevelText(item_manager.getCrate(reward.key).name, parseInt(reward.key.split("c")[1]) * 20)} ${this.colorLevelText("x" + this.formatNumber(reward.amount), 1)}`;
         }
 
-        const r_balance = new TextDisplayBuilder().setContent(`### Rewards\n\`\`\`${rewards_string}\`\`\``);
+        const r_balance = new TextDisplayBuilder().setContent(`### Rewards\n\`\`\`ansi${rewards_string}\`\`\``);
         
         const container = new ContainerBuilder()
         .setAccentColor(this.getLevelColor(user.progression.level))
@@ -403,7 +406,7 @@ export class MessageTemplates
         const empty_length = bar_length - filled_length;
         const filled_bar = '▰'.repeat(filled_length > 0 ? filled_length : 0);
         const empty_bar = '▱'.repeat(empty_length > 0 ? empty_length : 0);
-        const xp_string = level < config.MAX_LEVEL ? `${this.formatNumber(current_xp)} / ${this.formatNumber(required_xp)} XP` : 'MAX LEVEL';
+        const xp_string = level < config.LEVELING.MAX_LEVEL ? `${this.formatNumber(current_xp)} / ${this.formatNumber(required_xp)} XP` : 'MAX LEVEL';
 
         const xp_field = new TextDisplayBuilder().setContent(`\`\`\`ansi\n\u001b[1mLEVEL ${level}\u001b[0m\n${filled_bar}${empty_bar}\n${xp_string}\`\`\``);
 
@@ -783,7 +786,7 @@ export class MessageTemplates
     {
         const spacer = new SeparatorBuilder().setDivider(false);
         const header = new TextDisplayBuilder().setContent('# Item Inventory');
-        const hint = new TextDisplayBuilder().setContent('>>> Type `^use <code>` to activate an item from your inventory.');
+        const hint = new TextDisplayBuilder().setContent('>>> `^use <code>` to activate an item.\n`^open <code` to open a crate.');
 
         // show item name, code, quantity
         const name_width = 25;
@@ -815,7 +818,12 @@ export class MessageTemplates
         let table_content = '';
         for(const item of items)
         {
-            const display_name = item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name;
+            let display_name;
+            if(item.type === "crate")
+                display_name = this.colorLevelText(item.name, parseInt(item.key.split("c")[1]) * 20);
+            else
+                display_name = item.name.length > 22 ? item.name.substring(0, 22) + '...' : item.name;
+
             const code = item.key;
             const quantity = this.colorLevelText(`x${item.quantity}`, 1);
 

@@ -84,21 +84,20 @@ export async function handleGamba(args, message, usage)
             )]
         });
 
-        const result_type = final_result.result;
-        const xp = xp_manager.calculateXP(user, bet_amount, result_type);
+        const xp = xp_manager.calculateXP(user, bet_amount, final_result);
+        
+        // DEBUG
+        // for(let i = 1; i <= 100; i++)
+        // {
+        //     await xp_manager.getLevelRewards(i);
+        // }
 
         // wait for final result from item effects to update stats and balance
         await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);
         await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
 
-        // debug test rewards for all levels
-        for(let lvl=1; lvl<=100; lvl++)
-        {
-            const rewards = xp_manager.getLevelRewards(lvl);
-            console.log(`Level ${lvl} rewards: `, rewards);
-        }
-
-        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
+        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp * 10);
+        // const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
         // send user message instead of reply to message
         if(lvl_up)
         {
@@ -149,6 +148,11 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
             // give user a second chance
             const second_chance_result = await game.play(user, message, bet_amount, 'sc');
             modified_result = second_chance_result;
+            if(modified_result.result === 'win')
+            {
+                modified_result.payout = Math.floor(modified_result.payout * 0.5);
+                result_array.push({label: 'Second Chance', calc: 'x 0.5'});
+            }
         }
     }
 

@@ -19,11 +19,20 @@ export async function handleInventory(args, message, usage)
 
         for(const item of user_items)
         {
-            // get metadata from item manager
-            const item_meta = item_manager.getItem(item.key);
-            item.name = item_meta.name;
-            item.desc = item_meta.desc;
-            item.icon = item_meta.icon;
+            // determine if crate or item
+            const crate = item_manager.getCrate(item.key);
+            if(crate)
+            {
+                item.name = crate.name;
+                item.type = 'crate';
+            }
+            else
+            {
+                // get metadata from item manager
+                const item_meta = item_manager.getItem(item.key);
+                item.name = item_meta.name;
+                item.type = 'item';
+            }
         }
         
         const active_arr = [];

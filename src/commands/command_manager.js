@@ -10,6 +10,7 @@ import { handleStats } from './stats.js';
 import { handleHelp } from './help.js';
 import { handleLeaderboard } from './leaderboard.js';
 import { handleInventory } from './inventory.js';
+import { handleOpen } from './open.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -99,6 +100,14 @@ class CommandManager
                     description: 'View your item inventory',
                     usage: '^inventory, ^inv',
                     aliases: ['inventory', 'inv']
+                },
+
+                open:
+                {
+                    execute: handleOpen,
+                    description: 'Open a crate for rewards',
+                    usage: '^open <crate_code>',
+                    aliases: []
                 },
 
                 use:

@@ -25,7 +25,7 @@ class DBManager
     {
         this.db = await open(
         {
-            filename: './carrot_gamba_v2.db',
+            filename: './carrot_gamba_v3.db',
             driver: sqlite3.Database
         });
 
@@ -125,7 +125,6 @@ class DBManager
                     user_id TEXT,
                     guild_id TEXT,
                     uses_left INTEGER DEFAULT 1,
-                    meta_data TEXT,
                     created_on DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `);
@@ -463,12 +462,12 @@ class DBManager
         const user = await this.getUser(user_id, guild_id);
         
         // update user progression
-        if(user.progression.level < config.MAX_LEVEL)
+        if(user.progression.level < config.LEVELING.MAX_LEVEL)
             user.progression.xp += xp;
 
         // check for level up
         let leveled_up = false;
-        while(user.progression.xp >= xp_manager.requiredXPForLevel(user.progression.level) && user.progression.level < config.MAX_LEVEL)
+        while(user.progression.xp >= xp_manager.requiredXPForLevel(user.progression.level) && user.progression.level < config.LEVELING.MAX_LEVEL)
         {
             user.progression.xp -= xp_manager.requiredXPForLevel(user.progression.level);
             user.progression.level += 1;
@@ -595,7 +594,7 @@ class DBManager
     async addItemToUserInventory(user_id, guild_id, item, quantity)
     {
         const item_key = item.key;
-        const item_uses = item.max_uses;
+        const item_uses = item.max_uses ? item.max_uses : 1;
         for(let i = 0; i < quantity; i++)
         {
             await this.db.run(`
