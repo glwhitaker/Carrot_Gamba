@@ -96,8 +96,7 @@ export async function handleGamba(args, message, usage)
         await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);
         await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
 
-        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp * 10);
-        // const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
+        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
         // send user message instead of reply to message
         if(lvl_up)
         {
