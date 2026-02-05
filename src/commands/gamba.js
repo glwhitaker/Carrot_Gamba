@@ -85,12 +85,6 @@ export async function handleGamba(args, message, usage)
         });
 
         const xp = xp_manager.calculateXP(user, bet_amount, final_result);
-        
-        // DEBUG
-        // for(let i = 1; i <= 100; i++)
-        // {
-        //     await xp_manager.getLevelRewards(i);
-        // }
 
         // wait for final result from item effects to update stats and balance
         await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);

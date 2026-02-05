@@ -23,11 +23,11 @@ export async function handleWeekly(args, message)
             await db_manager.updateLastWeeklyClaim(user_id, guild_id, current_time.toISOString());
 
             // award weekly gift
-            await db_manager.updateUserBalance(user_id, guild_id, config.WEEKLY_AMOUNT);
+            await db_manager.updateUserBalance(user_id, guild_id, config.WEEKLY_AMOUNT * (1 + parseInt(user.progression.passive_multiplier) / 100));
 
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.weeklyRewardMessage(username, config.WEEKLY_AMOUNT)],
+                components: [MessageTemplates.weeklyRewardMessage(username, config.WEEKLY_AMOUNT * (1 + parseInt(user.progression.passive_multiplier) / 100))],
                 files: [{
                     attachment:'src/img/gift.png',
                     name:'gift.png'

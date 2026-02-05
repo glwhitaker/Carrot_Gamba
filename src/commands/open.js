@@ -32,31 +32,62 @@ export async function handleOpen(args, message, usage)
         }
 
         // get user items
-        // const user_items = await item_manager.getUserItems(user_id, guild_id);
-        // const user_crate = user_items.find(i => i.key === crate_key);
-        // if(!user_crate || user_crate.quantity < 1)
-        // {
-        //     return message.reply({
-        //         flags: MessageFlags.IsComponentsV2,
-        //         components: [MessageTemplates.errorMessage(`You don't have a **${item_manager.getCrate(crate_key).name}** to open.`)]
-        //     });
-        // }
+        const user_items = await item_manager.getUserItems(user_id, guild_id);
+        const user_crate = user_items.find(i => i.key === crate_key);
+        if(!user_crate || user_crate.quantity < 1)
+        {
+            return message.reply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.errorMessage(`You don't have a **${item_manager.getCrate(crate_key).name}** to open.`)]
+            });
+        }
 
-        // open crate
+        let reward_details = {};
         const rewards = item_manager.rollCrate(crate.key);
-
-        // give rewards to user
         for(const reward of rewards)
         {
             await item_manager.giveItemToUser(user_id, guild_id, reward, 1);
+
+            if(!reward_details[reward])
+            {
+                reward_details[reward] = {};
+                reward_details[reward].key = reward;
+                reward_details[reward].quantity = 1;
+            }
+            else
+                reward_details[reward].quantity += 1;
         }
-        
         // remove crate from user's inventory
         await item_manager.consumeItemForUser(user_id, guild_id, crate.key, 1);
+
+        // send initial message
+        const animation_message = await message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [MessageTemplates.crateMessage(user, crate)],
+            files: [{
+                attachment:`src/img/${crate.key}.gif`,
+                name:'crate.gif'
+            }]
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 1400));
+
+        // show final result after animation
+        await message.reply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+                MessageTemplates.crateResultMessage(user, crate, reward_details)],
+                files: [{
+                    attachment:`src/img/${crate.key}_5.png`,
+                    name:'crate.png'
+                }]
+        });
+
+        return animation_message.delete().catch(()=>{})
     }
 
     return message.reply({
         flags: MessageFlags.IsComponentsV2,
-        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
+        components: [MessageTemplates.errorMessage('You need to `^enroll` first!')],
     });
 }

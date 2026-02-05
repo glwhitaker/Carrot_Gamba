@@ -43,7 +43,7 @@ const config =
         "BOXES": {
             "c1": {
                 "key": "c1",
-                "name": "Crate I",
+                "name": "Copium Crate",
                 "price": 5000,
                 "rolls": 1,
                 "tier_weights": {
@@ -53,7 +53,7 @@ const config =
             },
             "c2": {
                 "key": "c2",
-                "name": "Crate II",
+                "name": "Hopium Crate",
                 "price": 10000,
                 "rolls": 2,
                 "tier_weights": {
@@ -63,7 +63,7 @@ const config =
             },
             "c3": {
                 "key": "c3",
-                "name": "Crate III",
+                "name": "Delusion Crate",
                 "price": 20000,
                 "rolls": 3,
                 "tier_weights": {
@@ -75,7 +75,7 @@ const config =
             },
             "c4": {
                 "key": "c4",
-                "name": "Crate IV",
+                "name": "Prophecy Crate",
                 "price": 50000,
                 "rolls": 4,
                 "tier_weights": {
@@ -87,7 +87,7 @@ const config =
             },
             "c5": {
                 "key": "c5",
-                "name": "Crate V",
+                "name": "Ascension Crate",
                 "price": 100000,
                 "rolls": 5,
                 "tier_weights": {

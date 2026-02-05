@@ -20,7 +20,7 @@ export async function handleEnroll(args, message)
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.balanceMessage(username, user.balance)],
             files: [{
-                attachment:'src2/img/bank.png',
+                attachment:'src/img/bank.png',
                 name:'image.png'
             }]
         });

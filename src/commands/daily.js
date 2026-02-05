@@ -23,11 +23,11 @@ export async function handleDaily(args, message)
             await db_manager.updateLastDailyClaim(user_id, guild_id, current_time.toISOString());
 
             // award daily gift
-            await db_manager.updateUserBalance(user_id, guild_id, config.DAILY_AMOUNT);
+            await db_manager.updateUserBalance(user_id, guild_id, config.DAILY_AMOUNT * (1 + parseInt(user.progression.passive_multiplier) / 100));
 
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.dailyRewardMessage(username, config.DAILY_AMOUNT)],
+                components: [MessageTemplates.dailyRewardMessage(username, config.DAILY_AMOUNT * (1 + parseInt(user.progression.passive_multiplier) / 100))],
                 files: [{
                     attachment:'src/img/gift.png',
                     name:'gift.png'

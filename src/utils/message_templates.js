@@ -1,4 +1,4 @@
-import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder } from 'discord.js';
+import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, MediaGalleryBuilder } from 'discord.js';
 import { item_manager } from '../items/item_manager.js';
 import { xp_manager } from '../user/xp_manager.js';
 import { command_manager } from '../commands/command_manager.js';
@@ -89,6 +89,20 @@ export class MessageTemplates
         const color = colors[color_index];
         const color_string = color + text + '\u001b[0m';
         return color_string;
+    }
+
+    static getCrateColor(crate_key)
+    {
+        if(crate_key === 'c1')
+            return RARITY_COLORS.UNCOMMON.HEX;
+        else if(crate_key === 'c2')
+            return RARITY_COLORS.RARE.HEX;
+        else if(crate_key === 'c3')
+            return RARITY_COLORS.EPIC.HEX;
+        else if(crate_key === 'c4')
+            return RARITY_COLORS.LEGENDARY.HEX;
+        else if(crate_key === 'c5')
+            return RARITY_COLORS.MYTHIC.HEX;
     }
 
     static visibleLength(string)
@@ -970,6 +984,72 @@ export class MessageTemplates
         .addSeparatorComponents(spacer)
         .addSeparatorComponents(spacer)
         .addActionRowComponents(action_row)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static crateMessage(user, crate)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`## Opening Crate...`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** opens **${crate.name}**`);
+
+        const image = new MediaGalleryBuilder()
+        .addItems([
+            {
+                media: {
+                    url: "attachment://crate.gif"
+                }
+            }
+        ]);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(this.getCrateColor(crate.key))
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addMediaGalleryComponents(image)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static crateResultMessage(user, crate, items)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`## Opening Crate...`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** opens **${crate.name}**`);
+
+        const image = new MediaGalleryBuilder()
+        .addItems([
+            {
+                media: {
+                    url: "attachment://crate.png"
+                }
+            }
+        ]);
+
+        let item_table = '```ansi\n'
+        for(const item in items)
+        {
+            const item_config = item_manager.getItem(items[item].key);
+            const item_name = item_config.name;
+            const quantity = items[item].quantity;
+            
+            item_table += `+ ${item_name} ${this.colorLevelText("x" + this.formatNumber(quantity), 1)}\n`;
+        }
+        item_table += '```';
+
+        const items_field = new TextDisplayBuilder().setContent(item_table);
+
+        let container = new ContainerBuilder()
+        .setAccentColor(this.getCrateColor(crate.key))
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addMediaGalleryComponents(image)
+        .addTextDisplayComponents(items_field)
         .addSeparatorComponents(spacer)
         .addTextDisplayComponents(this.getStandardFooter());
 
