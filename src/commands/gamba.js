@@ -84,6 +84,12 @@ export async function handleGamba(args, message, usage)
             )]
         });
 
+        // if game like mines, subtract bet amount from payout (we want the full payout to be shown in the message, but we only want to give the user the net winnings)
+        if(game.name === 'mines')
+        {
+            final_result.payout -= bet_amount;
+        }
+
         const xp = xp_manager.calculateXP(user, bet_amount, final_result);
 
         // wait for final result from item effects to update stats and balance

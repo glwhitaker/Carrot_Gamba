@@ -1,4 +1,4 @@
-import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, MediaGalleryBuilder } from 'discord.js';
+import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, ThumbnailBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, MediaGalleryBuilder, TextInputBuilder } from 'discord.js';
 import { item_manager } from '../items/item_manager.js';
 import { xp_manager } from '../user/xp_manager.js';
 import { command_manager } from '../commands/command_manager.js';
@@ -1054,5 +1054,143 @@ export class MessageTemplates
         .addTextDisplayComponents(this.getStandardFooter());
 
         return container;
+    }
+
+    static selectMinesMessage(user, bet_amount)
+    {
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# Mines`);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+
+        const action_row = new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+            .setCustomId('mines_mine_select')
+            .setPlaceholder('Select number of mines...')
+            .addOptions(
+                {label: '1', value: '1'},
+                {label: '2', value: '2'},
+                {label: '3', value: '3'},
+                {label: '4', value: '4'},
+                {label: '5', value: '5'},
+                {label: '6', value: '6'},
+                {label: '7', value: '7'},
+                {label: '8', value: '8'},
+                {label: '9', value: '9'},
+                {label: '10', value: '10'}
+            )
+        );
+
+        let container = new ContainerBuilder()
+        .setAccentColor(COLORS.GOLD);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+
+        container
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addActionRowComponents(action_row)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+    }
+
+    static minesGameMessage(user, bet_amount, cells, current_multiplier, cashed_out)
+    {
+        let head_text = `# Mines`;
+        if(cashed_out)
+            head_text = `# You Win!`;
+        else if(current_multiplier < 1)
+            head_text = `# You Lose!`;
+
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(head_text);
+        const p = new TextDisplayBuilder().setContent(`>>> **${user.username}** bets\n**${this.formatNumber(bet_amount)}** 🥕`);
+        
+        // cells are game board, 0 represents safe, 1 represents mine, 2 represents revealed safe, 3 represents revealed mine
+        let action_rows = [];
+        for(let row = 0; row < 4; row++)
+        {
+            const action_row = new ActionRowBuilder();
+            for(let col = 0; col < 5; col++)
+            {
+                const cell_index = row * 5 + col;
+                const cell_value = cells[cell_index];
+
+                const button = new ButtonBuilder()
+                .setCustomId(`mines_cell_${cell_index}`)
+                .setLabel('\u200B')
+                .setStyle(2)
+                .setDisabled(cashed_out || current_multiplier < 1);
+
+                if(cell_value === 2) // revealed safe
+                {
+                    button.setStyle(1);
+                    button.setDisabled(true);
+                    button.setEmoji('💎');
+                }
+                else if(cell_value === 3) // revealed mine
+                {
+                    button.setStyle(4);
+                    button.setDisabled(true);
+                    button.setEmoji('💣');
+                }
+
+                action_row.addComponents(button);
+            }
+            action_rows.push(action_row);
+        }
+        
+        // current payout and button to cashout bet_amount x multiplier written out
+        const num_mines = cells.filter(c => c === 1 || c === 3).length;
+        const mines_label = new TextDisplayBuilder().setContent(`**Mines: ${num_mines}**`);
+        const mult_label = new TextDisplayBuilder().setContent(`\n**Current Multiplier: ${current_multiplier.toFixed(2)}x**`);
+        const cashout_button = new ButtonBuilder()
+        .setCustomId('mines_cashout')
+        .setLabel('Cash Out')
+        .setStyle(3)
+        .setDisabled(current_multiplier <= 1 || cashed_out);
+
+        // add cashout button to its own action row
+        // const cashout_row = new ActionRowBuilder().addComponents(cashout_button);
+        const section = new SectionBuilder()
+        .addTextDisplayComponents(mines_label, mult_label)
+        .setButtonAccessory(cashout_button);
+
+        let container = new ContainerBuilder();
+
+        // color
+        if(cashed_out)
+            container.setAccentColor(COLORS.SUCCESS);
+        else if(current_multiplier < 1)
+            container.setAccentColor(COLORS.ERROR);
+        else
+            container.setAccentColor(COLORS.GOLD);
+
+        // get user items
+        const active_items = item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
+        if(Object.keys(active_items).length > 0)
+        {
+            container
+            .addTextDisplayComponents(this.getActiveItemsHeader(active_items));
+        }
+
+        container
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(p)
+        .addActionRowComponents(...action_rows)
+        .addSeparatorComponents(spacer)
+        .addSectionComponents(section)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
+
     }
 }
