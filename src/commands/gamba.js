@@ -62,7 +62,7 @@ export async function handleGamba(args, message, usage)
             });
         }
         
-        if(game_manager.userInGame(user.id, user.guild_id))
+        if(game_manager.userInGame(user.user_id, user.guild_id))
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(
@@ -70,7 +70,7 @@ export async function handleGamba(args, message, usage)
                 )]
             });
 
-        game_manager.startGame(user.id, user.guild_id, game);
+        game_manager.startGame(user.user_id, user.guild_id, game);
         const result = await game.play(user, message, bet_amount);
 
         // build result modification array to show final result message
@@ -94,7 +94,7 @@ export async function handleGamba(args, message, usage)
             )]
         });
 
-        game_manager.endGame(user.id, user.guild_id);
+        game_manager.endGame(user.user_id, user.guild_id);
 
         const xp = xp_manager.calculateXP(user, bet_amount, final_result);
 
