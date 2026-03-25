@@ -32,7 +32,12 @@ class XPManager
 
     requiredXPForLevel(level)
     {
-        const req = Math.floor(config.LEVELING.BASE_REQ_XP * Math.pow(level, config.LEVELING.XP_EXPONENT));
+        const req = Math.floor(config.LEVELING.BASE_REQ_XP * level * (1 + level * 0.002));
+
+        // for(var i = 1; i < 101; i++)
+        // {
+        //     console.log(Math.floor(config.LEVELING.BASE_REQ_XP * i * (1 + i * 0.002)));
+        // }
         return req;
     }
 

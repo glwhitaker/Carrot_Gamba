@@ -41,7 +41,8 @@ export async function handleGamba(args, message, usage)
         let bet_amount = args[1];
         if(bet_amount.toLowerCase() === 'max')
             bet_amount = user.balance;
-        else if(isNaN(bet_amount) || bet_amount < 10)
+        
+        if(isNaN(bet_amount) || bet_amount < game.min_bet)
         {
             return message.reply({
                 flags: MessageFlags.IsComponentsV2,
@@ -83,12 +84,6 @@ export async function handleGamba(args, message, usage)
                 result_array
             )]
         });
-
-        // if game like mines, subtract bet amount from payout (we want the full payout to be shown in the message, but we only want to give the user the net winnings)
-        if(game.name === 'mines')
-        {
-            final_result.payout -= bet_amount;
-        }
 
         const xp = xp_manager.calculateXP(user, bet_amount, final_result);
 
@@ -149,9 +144,10 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
             modified_result = second_chance_result;
             if(modified_result.result === 'win')
             {
+                
                 modified_result.payout = Math.floor(modified_result.payout * 0.5);
-                result_array.push({label: 'Second Chance', calc: 'x 0.5'});
-            }
+                result_array.push({label: 'Second Chance', calc: '- ' + MessageTemplates.formatNumber(modified_result.payout)});
+        }
         }
     }
 
@@ -171,8 +167,8 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
     {
         if(modified_result.result === 'win')
         {
+            result_array.push({label: 'Jackpot Juice', calc: '+ ' + MessageTemplates.formatNumber(modified_result.payout)});
             modified_result.payout = modified_result.payout * 2;
-            result_array.push({label: 'Jackpot Juice', calc: 'x 2'});
         }
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'jj', 1);

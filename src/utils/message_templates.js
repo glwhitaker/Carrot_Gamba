@@ -1151,6 +1151,7 @@ export class MessageTemplates
         const num_mines = cells.filter(c => c === 1 || c === 3).length;
         const mines_label = new TextDisplayBuilder().setContent(`**Mines: ${num_mines}**`);
         const mult_label = new TextDisplayBuilder().setContent(`\n**Current Multiplier: ${current_multiplier.toFixed(2)}x**`);
+        const carrot_label = new TextDisplayBuilder().setContent(`\n**Winnings: ${this.formatNumber(Math.floor(bet_amount * current_multiplier - bet_amount))}** 🥕`);
         const cashout_button = new ButtonBuilder()
         .setCustomId('mines_cashout')
         .setLabel('Cash Out')
@@ -1160,7 +1161,7 @@ export class MessageTemplates
         // add cashout button to its own action row
         // const cashout_row = new ActionRowBuilder().addComponents(cashout_button);
         const section = new SectionBuilder()
-        .addTextDisplayComponents(mines_label, mult_label)
+        .addTextDisplayComponents(mines_label, mult_label, carrot_label)
         .setButtonAccessory(cashout_button);
 
         let container = new ContainerBuilder();
@@ -1192,5 +1193,66 @@ export class MessageTemplates
 
         return container;
 
+    }
+
+    static userGameStatsMessage(user, game_name, user_stats, global_stats)
+    {
+        const v_game_name = game_name.charAt(0).toUpperCase() + game_name.slice(1);
+        const spacer = new SeparatorBuilder().setDivider(false);
+        const header = new TextDisplayBuilder().setContent(`# ${v_game_name} Statistics\n>>> Statistics for <@${user.user_id}>`);
+
+        // calc widths based on longest stat name and value, should add up to 52
+        const total = 52;
+        // find longest value between user and global stats
+        const stat_value_width = Math.max(
+            this.formatNumber(user_stats.total_games_played).length + 3,
+            this.formatNumber(user_stats.total_games_won).length + 3,
+            this.formatNumber(user_stats.total_games_lost).length + 3,
+            this.formatNumber(user_stats.total_money_wagered).length + 3,
+            this.formatNumber(user_stats.total_money_won).length + 3,
+            this.formatNumber(user_stats.total_money_lost).length + 3,
+            this.formatNumber(global_stats.total_games_played).length + 3,
+            this.formatNumber(global_stats.total_games_won).length + 3,
+            this.formatNumber(global_stats.total_games_lost).length + 3,
+            this.formatNumber(global_stats.total_money_wagered).length + 3,
+            this.formatNumber(global_stats.total_money_won).length + 3,
+            this.formatNumber(global_stats.total_money_lost).length + 3
+        );
+        const stat_name_width = total - stat_value_width;
+
+        const rowTemplate = (name, value) => `${name.padEnd(stat_name_width)}${value.padStart(stat_value_width)}`;
+
+        // user stats table
+        const stats_table = [
+            rowTemplate('\u001b[1mGames Played:\u001b[0m', this.formatNumber(user_stats.total_games_played)),
+            rowTemplate('\u001b[1mWins:\u001b[0m', this.formatNumber(user_stats.total_games_won)),
+            rowTemplate('\u001b[1mLosses:\u001b[0m', this.formatNumber(user_stats.total_games_lost)),
+            rowTemplate('\u001b[1mCarrots Wagered:\u001b[0m', this.formatNumber(user_stats.total_money_wagered) + ' 🥕'),
+            rowTemplate('\u001b[1mCarrots Won:\u001b[0m', this.formatNumber(user_stats.total_money_won) + ' 🥕'),
+            rowTemplate('\u001b[1mCarrots Lost:\u001b[0m', this.formatNumber(user_stats.total_money_lost) + ' 🥕')
+        ].join('\n');
+
+        // global stats table
+        const global_stats_table = [
+            rowTemplate('\u001b[1mGames Played:\u001b[0m', this.formatNumber(global_stats.total_games_played)),
+            rowTemplate('\u001b[1mWins:\u001b[0m', this.formatNumber(global_stats.total_games_won)),
+            rowTemplate('\u001b[1mLosses:\u001b[0m', this.formatNumber(global_stats.total_games_lost)),
+            rowTemplate('\u001b[1mCarrots Wagered:\u001b[0m', this.formatNumber(global_stats.total_money_wagered) + ' 🥕'),
+            rowTemplate('\u001b[1mCarrots Won:\u001b[0m', this.formatNumber(global_stats.total_money_won) + ' 🥕'),
+            rowTemplate('\u001b[1mCarrots Lost:\u001b[0m', this.formatNumber(global_stats.total_money_lost) + ' 🥕')
+        ].join('\n');
+
+        const stats_field = new TextDisplayBuilder().setContent(`## Your Stats\n\`\`\`ansi\n${stats_table}\n\`\`\``);
+        const global_stats_field = new TextDisplayBuilder().setContent(`## Global Stats\n\`\`\`ansi\n${global_stats_table}\n\`\`\``);
+
+        const container = new ContainerBuilder()
+        .setAccentColor(COLORS.INFO)
+        .addTextDisplayComponents(header)
+        .addTextDisplayComponents(stats_field)
+        .addTextDisplayComponents(global_stats_field)
+        .addSeparatorComponents(spacer)
+        .addTextDisplayComponents(this.getStandardFooter());
+
+        return container;
     }
 }

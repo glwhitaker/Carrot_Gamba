@@ -88,7 +88,7 @@ export class Mines extends Game
                         components: [MessageTemplates.minesGameMessage(user, bet_amount, cells, current_multiplier, true)]
                     });
 
-                    resolve({result: 'win', payout: Math.floor(bet_amount * current_multiplier), message: cell_interaction.message, base_payout: Math.floor(bet_amount * current_multiplier)});
+                    resolve({result: 'win', payout: Math.floor(bet_amount * current_multiplier - bet_amount), message: cell_interaction.message, base_payout: Math.floor(bet_amount * current_multiplier - bet_amount)});
                 }
                 else
                 {
@@ -99,6 +99,8 @@ export class Mines extends Game
                     {
                         cells[cell_index] = 3;
 
+                        cells = this.clearCells(cells)
+                        
                         await cell_interaction.editReply({
                             flags: MessageFlags.IsComponentsV2,
                             components: [MessageTemplates.minesGameMessage(user, bet_amount, cells, 0, false)]
@@ -123,5 +125,19 @@ export class Mines extends Game
                 }
             });
         });
+    }
+
+    clearCells(cells)
+    {
+        // reveal all cells
+        for(var i = 0; i < cells.length; i++)
+        {
+            if(cells[i] == 1)
+                cells[i] = 3;
+            else if(cells[i] == 0)
+                cells[i] = 2;
+        }
+
+        return cells;
     }
 }

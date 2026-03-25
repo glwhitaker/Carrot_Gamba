@@ -35,7 +35,7 @@ const config =
         "OVERFLOW_REDUCTION": 0.25,     // percentage of overflow XP retained after soft cap
 
         "BASE_REQ_XP": 100,
-        "XP_EXPONENT": 1.05,
+        "XP_EXPONENT": 1.03,
         "MAX_LEVEL": 100,
     },
     "ITEMS":

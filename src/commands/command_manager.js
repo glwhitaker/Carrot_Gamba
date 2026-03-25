@@ -64,7 +64,7 @@ class CommandManager
                     execute: handleGamba,
                     description: 'Play games to win carrots',
                     usage: '^gamba <game> <bet amount|"max">',
-                    aliases: []
+                    aliases: ['g']
                 }
             },
             utility:

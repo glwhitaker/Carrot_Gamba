@@ -657,7 +657,7 @@ class DBManager
         );
     }
 
-    async getLeaderboard(guild_id)
+    async getLeaderboard(guild_id, limit = config.LEADERBOARD.SIZE)
     {
         let board = [];
         const lb = await this.db.all(`
@@ -666,7 +666,7 @@ class DBManager
             WHERE guild_id = ?
             ORDER BY balance DESC
             LIMIT ?`,
-            [guild_id, config.LEADERBOARD.SIZE]
+            [guild_id, limit]
         );
 
         for(const entry of lb)
@@ -680,7 +680,7 @@ class DBManager
         return board;
     }
 
-    async getAllTimeLeaderboard(guild_id)
+    async getAllTimeLeaderboard(guild_id, limit = config.LEADERBOARD.SIZE)
     {
         let board = [];
         const lb = await this.db.all(`
@@ -689,7 +689,7 @@ class DBManager
             WHERE guild_id = ?
             ORDER BY highest_balance DESC
             LIMIT ?`,
-            [guild_id, config.LEADERBOARD.SIZE]
+            [guild_id, limit]
         );
 
         for(const entry of lb)
@@ -701,6 +701,49 @@ class DBManager
         // re-sort to ensure correct order (may be off due to cache)
         board.sort((a, b) => b.highest_balance - a.highest_balance);
         return board;
+    }
+
+    async getUserGameStats(user_id, guild_id, game_name)
+    {
+        // get comprehensive stats for a user for a specific game
+        // derive these from game_history
+        // get total games played, won, lost, total money wagered, won, lost for the game
+        const stats = await this.db.get(`
+            SELECT 
+                (SELECT COUNT(*) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ?) as total_games_played,
+                (SELECT COUNT(*) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND result = 'win') as total_games_won,
+                (SELECT COUNT(*) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND result = 'loss') as total_games_lost,
+                (SELECT SUM(bet_amount) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ?) as total_money_wagered,
+                (SELECT SUM(payout) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND payout > 0) as total_money_won,
+                (SELECT ABS(SUM(payout)) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND payout < 0) as total_money_lost
+            `,
+            [
+                user_id, guild_id, game_name,
+                user_id, guild_id, game_name,
+                user_id, guild_id, game_name,
+                user_id, guild_id, game_name,
+                user_id, guild_id, game_name,
+                user_id, guild_id, game_name
+            ]
+        );
+
+        return stats;
+    }
+
+    async getGlobalGameStats(guild_id, game_name)
+    {
+        // get global stats for a specific game
+        // can be found in game_stats table
+        const stats = await this.db.get(`
+            SELECT *
+            FROM game_stats
+            WHERE game_name = ?`,
+            [
+                game_name
+            ]
+        );
+
+        return stats;
     }
 }
 
