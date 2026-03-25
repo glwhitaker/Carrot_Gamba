@@ -8,6 +8,7 @@ class GameManager
     constructor()
     {
         this.gameClasses = new Map();
+        this.active_games = new Map();
         this.registerGames();
     }
 
@@ -29,6 +30,25 @@ class GameManager
     listGames()
     {
         return Array.from(this.gameClasses.keys());
+    }
+
+    startGame(user_id, guild_id, game_instance)
+    {
+        const key = `${guild_id}-${user_id}`;
+        if(!this.active_games.has(key))
+            this.active_games.set(key, game_instance);
+    }
+
+    userInGame(user_id, guild_id)
+    {
+        const key = `${guild_id}-${user_id}`;
+        return this.active_games.has(key);
+    }
+
+    endGame(user_id, guild_id)
+    {
+        const key = `${guild_id}-${user_id}`;
+        this.active_games.delete(key);
     }
 }
 

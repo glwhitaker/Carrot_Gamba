@@ -5,6 +5,7 @@ class ItemManager
 {
     constructor()
     {
+        // item to guaruntee one card to be ace in blackjack
         this.items = {
             "sc" : {
                 "key": "sc",
