@@ -81,19 +81,31 @@ export async function handleGamba(args, message, usage)
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // send result message
-        final_result.message.edit({
-            flags: MessageFlags.IsComponentsV2,
-            components: [MessageTemplates.appendGameResult(
-                final_result.message,
-                game.name,
-                bet_amount,
-                final_result.result,
-                final_result.base_payout,
-                final_result.payout,
-                result_array
-            )]
-        });
-
+        if(final_result.result != "timeout")
+        {
+            final_result.message.edit({
+                flags: MessageFlags.IsComponentsV2,
+                components: [MessageTemplates.appendGameResult(
+                    final_result.message,
+                    game.name,
+                    bet_amount,
+                    final_result.result,
+                    final_result.base_payout,
+                    final_result.payout,
+                    result_array
+                )]
+            });
+        }
+        else
+        {
+            final_result.message.edit({
+                flags: MessageFlags.IsComponentsV2,
+                components:  [MessageTemplates.errorMessage(
+                    `Your game timed out. Bet returned.`
+                )]
+            });
+        }
+        
         game_manager.endGame(user.user_id, user.guild_id);
 
         const xp = xp_manager.calculateXP(user, bet_amount, final_result);

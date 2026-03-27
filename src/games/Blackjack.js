@@ -427,6 +427,14 @@ export class Blackjack extends Game
                     resolve(result);
                 }
             });
+
+            collector.on('end', async(collected, reason) =>
+            {
+                if(reason === 'time' && collected.size === 0)
+                {
+                    resolve(await this.handleTimeout(user, game_message));
+                }
+            });
         });
 
         if(active_items['xrv'])

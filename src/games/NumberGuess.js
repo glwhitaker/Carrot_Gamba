@@ -71,6 +71,14 @@ export class NumberGuess extends Game
                 collector.stop();
                 resolve(temp_res);
             });
+
+            collector.on('end', async(collected, reason) =>
+            {
+                if(reason === 'time' && collected.size === 0)
+                {
+                    resolve(await this.handleTimeout(user, game_message));
+                }
+            });
         });
 
         if(active_items['no'])

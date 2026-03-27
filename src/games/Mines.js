@@ -53,6 +53,14 @@ export class Mines extends Game
                 const res = await this.startGame(user, interaction, bet_amount, cells);
                 resolve(res);
             });
+
+            select_collector.on('end', async(collected, reason) =>
+            {
+                if(reason === 'time' && collected.size === 0)
+                {
+                    resolve(await this.handleTimeout(user, game_message));
+                }
+            });
         });
 
         return result;
@@ -122,6 +130,14 @@ export class Mines extends Game
                             components: [MessageTemplates.minesGameMessage(user, bet_amount, cells, current_multiplier, false)]
                         });
                     }
+                }
+            });
+
+            game_collector.on('end', async(collected, reason) =>
+            {
+                if(reason === 'time' && collected.size === 0)
+                {
+                    resolve(await this.handleTimeout(user, game_message));
                 }
             });
         });
