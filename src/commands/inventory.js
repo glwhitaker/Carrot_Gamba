@@ -2,6 +2,7 @@ import { db_manager } from "../db/db_manager.js";
 import { item_manager } from "../items/item_manager.js";
 import { MessageFlags } from 'discord.js';
 import { MessageTemplates } from "../utils/message_templates.js";
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleInventory(args, message, usage)
 {
@@ -34,7 +35,7 @@ export async function handleInventory(args, message, usage)
                 item.type = 'item';
             }
         }
-        
+
         const active_arr = [];
         for(const key in active_items)
         {
@@ -46,14 +47,14 @@ export async function handleInventory(args, message, usage)
             });
         }
 
-        return message.reply({
+        return message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.inventoryMessage(user, user_items, active_arr)]
         });
     }
 
-    return message.reply({
+    return message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
-    });
+    }, message_dispatcher.PRIORITY.HIGH);
 }

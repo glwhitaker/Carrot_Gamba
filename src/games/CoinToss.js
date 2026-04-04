@@ -2,6 +2,7 @@ import { Game } from './Game.js';
 import { item_manager } from "../items/item_manager.js";
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export class CoinToss extends Game
 {
@@ -22,7 +23,7 @@ export class CoinToss extends Game
         const animation_frames = ['💫', '🪙', '💫', '🪙'];
 
         // send initial message that game has started
-        const game_message = await message.reply({
+        const game_message = await message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.coinTossMessage(user, bet_amount)]
         });
@@ -30,14 +31,14 @@ export class CoinToss extends Game
         // animate coin toss
         for (const frame of animation_frames) {
             await new Promise(resolve => setTimeout(resolve, 500));
-            await game_message.edit({
+            await message_dispatcher.edit(game_message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.coinTossMessage(user, bet_amount, frame)]
             });
         }
 
         // show final result after animation
-        await game_message.edit({
+        await message_dispatcher.edit(game_message, {
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.coinTossResultMessage(user, bet_amount, result)

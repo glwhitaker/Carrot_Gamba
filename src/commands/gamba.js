@@ -5,6 +5,7 @@ import { xp_manager } from '../user/xp_manager.js';
 import config from '../config.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleGamba(args, message, usage)
 {
@@ -19,10 +20,10 @@ export async function handleGamba(args, message, usage)
     {
         if(args.length !== 2)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(`Usage: \`${usage}\``)]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         const game_name = args[0];
@@ -30,12 +31,12 @@ export async function handleGamba(args, message, usage)
 
         if(!game)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(
                     `Invalid game. Available games: **${game_manager.listGames().join(', ')}**`
                 )]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         let bet_amount = args[1];
@@ -44,31 +45,31 @@ export async function handleGamba(args, message, usage)
         
         if(isNaN(bet_amount) || bet_amount < game.min_bet)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(
                     `Invalid bet amount. Minimum bet for **${game.name}** is **${game.min_bet}** carrots.`
                 )]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
         else
             bet_amount = parseInt(bet_amount);
 
         if(user.balance < bet_amount)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage('Insufficient balance.\nYour balance: **'+ MessageTemplates.formatNumber(user.balance) + '** 🥕')]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
         
         if(game_manager.userInGame(user.user_id, user.guild_id))
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(
                     `You already have an active game.`
                 )]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
 
         game_manager.startGame(user.user_id, user.guild_id, game);
         const result = await game.play(user, message, bet_amount);
@@ -83,7 +84,7 @@ export async function handleGamba(args, message, usage)
         // send result message
         if(final_result.result != "timeout")
         {
-            final_result.message.edit({
+            await message_dispatcher.edit(final_result.message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.appendGameResult(
                     final_result.message,
@@ -98,12 +99,12 @@ export async function handleGamba(args, message, usage)
         }
         else
         {
-            final_result.message.edit({
+            await message_dispatcher.edit(final_result.message, {
                 flags: MessageFlags.IsComponentsV2,
                 components:  [MessageTemplates.errorMessage(
                     `Your game timed out. Bet returned.`
                 )]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
         
         game_manager.endGame(user.user_id, user.guild_id);
@@ -119,7 +120,7 @@ export async function handleGamba(args, message, usage)
         if(lvl_up)
         {
             const rewards = xp_manager.getLevelRewards(user.progression.level);
-            message.channel.send({
+            message_dispatcher.send(message.channel, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.levelUpMessage(user, username, rewards)]
             });
@@ -132,10 +133,10 @@ export async function handleGamba(args, message, usage)
     }
     else
     {
-        return message.reply({
+        return message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
-        });
+        }, message_dispatcher.PRIORITY.HIGH);
     }
 }
 
@@ -144,7 +145,7 @@ async function sendItemMessage(user, item_key, message)
     // slight delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    await message.reply({
+    await message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.itemUsedMessage(user, item_key)]
     });

@@ -1,6 +1,7 @@
 import { db_manager } from '../db/db_manager.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleLeaderboard(args, message)
 {
@@ -9,7 +10,7 @@ export async function handleLeaderboard(args, message)
     leaderboards.balance = await db_manager.getLeaderboard(guild_id);
     leaderboards.highest_balance = await db_manager.getAllTimeLeaderboard(guild_id);
 
-    const reply = await message.reply({
+    const reply = await message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.leaderboardMessage(leaderboards, 'balance')]
     });
@@ -26,7 +27,7 @@ export async function handleLeaderboard(args, message)
 
         const selected_category = interaction.values[0];
 
-        await interaction.editReply({
+        await message_dispatcher.editReply(interaction, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.leaderboardMessage(leaderboards, selected_category)]
         });

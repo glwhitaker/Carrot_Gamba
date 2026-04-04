@@ -2,6 +2,7 @@ import { Game } from './Game.js';
 import { item_manager } from "../items/item_manager.js";
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export class NumberGuess extends Game
 {
@@ -36,7 +37,7 @@ export class NumberGuess extends Game
         }
 
         // show initial message prompting user to choose a number
-        const game_message = await message.reply({
+        const game_message = await message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.numberGuessMessage(user, bet_amount, this.min_number, this.max_number, hinted_numbers, false)]
         });
@@ -61,7 +62,7 @@ export class NumberGuess extends Game
 
                 const temp_res = {result: result_str, payout: payout, message: game_message, guessed_number: guessed_number, winning_number: winning_number, base_payout: base_payout};
 
-                game_message.edit({
+                await message_dispatcher.edit(game_message, {
                     flags: MessageFlags.IsComponentsV2,
                     components: [
                         MessageTemplates.numberGuessResultMessage(user, bet_amount, this.min_number, this.max_number, temp_res)

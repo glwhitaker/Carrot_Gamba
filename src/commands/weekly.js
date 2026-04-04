@@ -2,6 +2,7 @@ import { db_manager } from '../db/db_manager.js';
 import config from '../config.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleWeekly(args, message)
 {
@@ -25,7 +26,7 @@ export async function handleWeekly(args, message)
             // award weekly gift
             await db_manager.updateUserBalance(user_id, guild_id, config.WEEKLY_AMOUNT * (1 + parseInt(user.progression.passive_multiplier) / 100));
 
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.weeklyRewardMessage(username, config.WEEKLY_AMOUNT * (1 + parseInt(user.progression.passive_multiplier) / 100))],
                 files: [{
@@ -41,9 +42,9 @@ export async function handleWeekly(args, message)
             const days_remaining = Math.floor(time_remaining / (1000 * 60 * 60 * 24));
             const hours_remaining = Math.floor((time_remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes_remaining = Math.floor((time_remaining % (1000 * 60 * 60)) / (1000 * 60));
-    
 
-            return message.reply({
+
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.weeklyCooldownMessage(days_remaining, hours_remaining, minutes_remaining)],
                 files: [{
@@ -54,8 +55,8 @@ export async function handleWeekly(args, message)
         }
     }
 
-    return message.reply({
+    return message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
-    });
+    }, message_dispatcher.PRIORITY.HIGH);
 }

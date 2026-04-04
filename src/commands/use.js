@@ -2,6 +2,7 @@ import { item_manager } from "../items/item_manager.js";
 import { db_manager } from "../db/db_manager.js";
 import { MessageFlags } from 'discord.js';
 import { MessageTemplates } from "../utils/message_templates.js";
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleUse(args, message, usage)
 {
@@ -13,14 +14,14 @@ export async function handleUse(args, message, usage)
     // see if user has the item
     if(args.length !== 1)
     {
-        return message.reply({
+        return message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.errorMessage(`Usage: \`${usage}\``)]
-        });
+        }, message_dispatcher.PRIORITY.HIGH);
     }
 
     const user = await db_manager.getUser(user_id, guild_id);
-    
+
     if(user)
     {
         // get items from user's inventory
@@ -32,28 +33,28 @@ export async function handleUse(args, message, usage)
         // see if valid item
         if(!item_manager.getItem(item_key))
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(`Invalid item. Use \`^inventory\` to see your items.`)]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         if(!item || item.quantity <= 0)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(`You don't have a **${item_manager.getItem(item_key).name}** to use.`)]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         // first see if item is already active for user
         const active_items = await item_manager.getActiveItemsForUser(user_id, guild_id);
         if(active_items[item_key])
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(`You have already activated **${item_manager.getItem(item_key).name}**.`)]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         // add item effect to current activated items for this user
@@ -67,14 +68,14 @@ export async function handleUse(args, message, usage)
 
         await item_manager.consumeItemForUser(user_id, guild_id, item_key, 1);
 
-        return message.reply({
+        return message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.itemActivatedMessage(user, item.key)]
         })
     }
 
-    return message.reply({
+    return message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
-    });
+    }, message_dispatcher.PRIORITY.HIGH);
 }

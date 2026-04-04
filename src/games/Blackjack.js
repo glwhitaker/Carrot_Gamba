@@ -2,6 +2,7 @@ import { Game } from './Game.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
 import { item_manager } from '../items/item_manager.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export class Blackjack extends Game
 {
@@ -137,7 +138,7 @@ export class Blackjack extends Game
 
     async update_game_message(game_message, user, bet_amount, player_value, dealer_value, hide_dealer)
     {
-        await game_message.edit({
+        await message_dispatcher.edit(game_message, {
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.blackjackMessage(
@@ -156,7 +157,7 @@ export class Blackjack extends Game
 
     async update_result_message(game_message, user, bet_amount, player_value, dealer_value, result)
     {
-        await game_message.edit({
+        await message_dispatcher.edit(game_message, {
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.blackjackResultMessage(
@@ -303,7 +304,7 @@ export class Blackjack extends Game
             hide_dealer = false;
         }
 
-        const game_message = await message.reply({
+        const game_message = await message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.blackjackMessage(

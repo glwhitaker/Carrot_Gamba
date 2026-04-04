@@ -1,6 +1,7 @@
 import { db_manager } from '../db/db_manager.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleBalance(args, message)
 {
@@ -12,7 +13,7 @@ export async function handleBalance(args, message)
 
     if(balance !== null)
     {
-        return message.reply({
+        return message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.balanceMessage(username, balance)],
             files: [{
@@ -22,8 +23,8 @@ export async function handleBalance(args, message)
         });
     }
 
-    return message.reply({
+    return message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.errorMessage('You need to `^enroll` first!')]
-    });
+    }, message_dispatcher.PRIORITY.HIGH);
 }

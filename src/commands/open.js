@@ -2,6 +2,7 @@ import { db_manager } from "../db/db_manager.js";
 import { item_manager } from "../items/item_manager.js";
 import { MessageFlags } from 'discord.js';
 import { MessageTemplates } from "../utils/message_templates.js";
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleOpen(args, message, usage)
 {
@@ -15,20 +16,20 @@ export async function handleOpen(args, message, usage)
         // get crate key from args
         if(args.length !== 1)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(`Usage: \`${usage}\``)]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         const crate_key = args[0];
         const crate = item_manager.getCrate(crate_key);
         if(!crate)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage('Invalid crate. Use \`^inventory\` to see your crates.')]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         // get user items
@@ -36,10 +37,10 @@ export async function handleOpen(args, message, usage)
         const user_crate = user_items.find(i => i.key === crate_key);
         if(!user_crate || user_crate.quantity < 1)
         {
-            return message.reply({
+            return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
                 components: [MessageTemplates.errorMessage(`You don't have a **${item_manager.getCrate(crate_key).name}** to open.`)]
-            });
+            }, message_dispatcher.PRIORITY.HIGH);
         }
 
         let reward_details = {};
@@ -61,7 +62,7 @@ export async function handleOpen(args, message, usage)
         await item_manager.consumeItemForUser(user_id, guild_id, crate.key, 1);
 
         // send initial message
-        const animation_message = await message.reply({
+        const animation_message = await message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.crateMessage(user, crate)],
             files: [{
@@ -73,7 +74,7 @@ export async function handleOpen(args, message, usage)
         await new Promise(resolve => setTimeout(resolve, 1400));
 
         // show final result after animation
-        await message.reply({
+        await message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [
                 MessageTemplates.crateResultMessage(user, crate, reward_details)],
@@ -83,11 +84,11 @@ export async function handleOpen(args, message, usage)
                 }]
         });
 
-        return animation_message.delete().catch(()=>{})
+        return message_dispatcher.delete(animation_message).catch(()=>{})
     }
 
-    return message.reply({
+    return message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.errorMessage('You need to `^enroll` first!')],
-    });
+    }, message_dispatcher.PRIORITY.HIGH);
 }

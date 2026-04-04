@@ -2,6 +2,7 @@ import { Game } from './Game.js';
 import { item_manager } from "../items/item_manager.js";
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export class Mines extends Game
 {
@@ -19,7 +20,7 @@ export class Mines extends Game
         const cells = new Array(this.num_cells).fill(0);
 
         // send message for user to select number of mines 2-5
-        const game_message = await message.reply({
+        const game_message = await message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.selectMinesMessage(user, bet_amount)]
         });
@@ -68,7 +69,7 @@ export class Mines extends Game
 
     async startGame(user, interaction, bet_amount, cells)
     {
-        await interaction.editReply({
+        await message_dispatcher.editReply(interaction, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.minesGameMessage(user, bet_amount, cells, 1)]
         });
@@ -91,7 +92,7 @@ export class Mines extends Game
                     const safe_remaining = this.total_safe - this.safe_revealed;
                     const current_multiplier = this.total_safe / safe_remaining;
 
-                    await cell_interaction.editReply({
+                    await message_dispatcher.editReply(cell_interaction, {
                         flags: MessageFlags.IsComponentsV2,
                         components: [MessageTemplates.minesGameMessage(user, bet_amount, cells, current_multiplier, true)]
                     });
@@ -109,7 +110,7 @@ export class Mines extends Game
 
                         cells = this.clearCells(cells)
                         
-                        await cell_interaction.editReply({
+                        await message_dispatcher.editReply(cell_interaction, {
                             flags: MessageFlags.IsComponentsV2,
                             components: [MessageTemplates.minesGameMessage(user, bet_amount, cells, 0, false)]
                         });
@@ -125,7 +126,7 @@ export class Mines extends Game
                         const safe_remaining = this.total_safe - this.safe_revealed;
                         const current_multiplier = this.total_safe / safe_remaining;
 
-                        cell_interaction.editReply({
+                        await message_dispatcher.editReply(cell_interaction, {
                             flags: MessageFlags.IsComponentsV2,
                             components: [MessageTemplates.minesGameMessage(user, bet_amount, cells, current_multiplier, false)]
                         });

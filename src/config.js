@@ -38,6 +38,10 @@ const config =
         "XP_EXPONENT": 1.03,
         "MAX_LEVEL": 100,
     },
+    "DISPATCHER":
+    {
+        "CHANNEL_SPACING_MS": 250
+    },
     "ITEMS":
     {
         "BOXES": {

@@ -2,6 +2,7 @@ import { db_manager } from '../db/db_manager.js';
 import config from '../config.js';
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleEnroll(args, message)
 {
@@ -12,11 +13,11 @@ export async function handleEnroll(args, message)
     const current_time = new Date().toISOString();
 
     const user = await db_manager.getUser(user_id, guild_id);
-    
+
     if(user)
     {
         // if user already enrolled, return balance
-        return message.reply({
+        return message_dispatcher.reply(message, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.balanceMessage(username, user.balance)],
             files: [{
@@ -25,11 +26,11 @@ export async function handleEnroll(args, message)
             }]
         });
     }
-    
+
     // enroll the user if not there
     await db_manager.enrollUser(user_id, guild_id, username, current_time);
 
-    return message.reply({
+    return message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.successMessage('Welcome!',`You have been enrolled with **${MessageTemplates.formatNumber(config.STARTING_BALANCE)}** carrots! 🥕`)]
     });

@@ -1,5 +1,6 @@
 import { MessageTemplates } from '../utils/message_templates.js';
 import { MessageFlags } from 'discord.js';
+import { message_dispatcher } from '../utils/message_dispatcher.js';
 
 export async function handleHelp(args, message, usage)
 {
@@ -12,8 +13,8 @@ export async function handleHelp(args, message, usage)
             'token will be triggered automatically, providing you with a second chance to win without losing your bet.'
         }
     }
-    
-    const reply = await message.reply({
+
+    const reply = await message_dispatcher.reply(message, {
         flags: MessageFlags.IsComponentsV2,
         components: [MessageTemplates.helpMessage('economy', info)]
     });
@@ -30,7 +31,7 @@ export async function handleHelp(args, message, usage)
 
         const selected_category = interaction.values[0];
 
-        await interaction.editReply({
+        await message_dispatcher.editReply(interaction, {
             flags: MessageFlags.IsComponentsV2,
             components: [MessageTemplates.helpMessage(selected_category, info)]
         });
