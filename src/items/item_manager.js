@@ -60,6 +60,15 @@ class ItemManager
                 "price": 7000,
                 "max_uses": 1,
                 "tier": 2
+            },
+            "ace": {
+                "key": "ace",
+                "name": "Ace.exe",
+                "desc": "Lasts 1 game. Guarantees an ace on draw in Blackjack.",
+                "icon": "♠️",
+                "price": 7000,
+                "max_uses": 1,
+                "tier": 3
             }
         };
 

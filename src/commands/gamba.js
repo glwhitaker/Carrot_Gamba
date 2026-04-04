@@ -126,6 +126,9 @@ export async function handleGamba(args, message, usage)
             await xp_manager.applyLevelRewards(user, user.progression.level);
             return;
         }
+
+        // if(user.user_id == '320903160040390657' && user.guild_id == '1357364607924310166')
+        //     xp_manager.applyLevelRewards(user, 100);
     }
     else
     {
