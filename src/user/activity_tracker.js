@@ -7,17 +7,8 @@ class ActivityTracker
 {
     constructor()
     {
-        if(!ActivityTracker.instance)
-        {
-            ActivityTracker.instance = this;
-        }
         this.activeVoiceUsers = new Map();
         this.client = null;
-    }
-
-    getInstance()
-    {
-        return ActivityTracker.instance;
     }
 
     init(client)

@@ -185,20 +185,4 @@ class XPManager
 }
 
 
-class XPManagerSingleton
-{
-    constructor()
-    {
-        if(!XPManagerSingleton.instance)
-        {
-            XPManagerSingleton.instance = new XPManager();
-        }
-    }
-
-    getInstance()
-    {
-        return XPManagerSingleton.instance;
-    }
-}
-
-export const xp_manager = new XPManagerSingleton().getInstance();
+export const xp_manager = new XPManager();

@@ -59,6 +59,9 @@ upload/
 .cache/
 .wwebjs_auth/
 
+# Claude Code (personal config, memory, settings)
+.claude/
+
 # Miscellaneous
 .DS_Store
 Thumbs.db

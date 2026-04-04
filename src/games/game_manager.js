@@ -52,20 +52,4 @@ class GameManager
     }
 }
 
-class GameManagerSingleton
-{
-    constructor()
-    {
-        if(!GameManagerSingleton.instance)
-        {
-            GameManagerSingleton.instance = new GameManager();
-        }
-    }
-
-    getInstance()
-    {
-        return GameManagerSingleton.instance;
-    }
-}
-
-export const game_manager = new GameManagerSingleton().getInstance();
+export const game_manager = new GameManager();

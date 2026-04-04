@@ -311,7 +311,7 @@ class DBManager
         this.user_cache.set(key, user);
 
         // check if user is in voice chat
-        await activity_tracker.getInstance().startVoiceForActiveUsers();
+        await activity_tracker.startVoiceForActiveUsers();
     }
 
     async updateUser(user_id, guild_id)
@@ -747,20 +747,4 @@ class DBManager
     }
 }
 
-class DBManagerSingleton
-{
-    constructor()
-    {
-        if(!DBManagerSingleton.instance)
-        {
-            DBManagerSingleton.instance = new DBManager();
-        }
-    }
-
-    getInstance()
-    {
-        return DBManagerSingleton.instance;
-    }
-}
-
-export const db_manager = new DBManagerSingleton().getInstance();
+export const db_manager = new DBManager();

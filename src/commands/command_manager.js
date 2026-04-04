@@ -181,20 +181,4 @@ class CommandManager
     }
 }
 
-class CommandManagerSingleton
-{
-    constructor()
-    {
-        if(!CommandManagerSingleton.instance)
-        {
-            CommandManagerSingleton.instance = new CommandManager();
-        }
-    }
-
-    getInstance()
-    {
-        return CommandManagerSingleton.instance;
-    }
-}
-
-export const command_manager = new CommandManagerSingleton().getInstance();
+export const command_manager = new CommandManager();
