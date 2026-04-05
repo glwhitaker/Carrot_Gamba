@@ -178,7 +178,7 @@ export class MessageTemplates
         const current_xp = user.progression.xp;
         const required_xp = xp_manager.requiredXPForLevel(level);
 
-        const bar_length = 30;
+        const bar_length = 26;
         const filled_length = Math.floor((current_xp / required_xp) * bar_length);
         const empty_length = bar_length - filled_length;
         const filled_bar = '▰'.repeat(filled_length > 0 ? filled_length : 0);
@@ -768,7 +768,7 @@ export class MessageTemplates
     {
         const xp_bar = this.userExperienceBar(user);
 
-        const total = 56;
+        const total = 50;
         const stat_value_width = Math.max(
             this.formatNumber(stats.highest_balance).length + 3,
             this.formatNumber(stats.total_money_won).length + 3,
