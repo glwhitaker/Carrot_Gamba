@@ -12,7 +12,6 @@ export async function handleGamba(args, message, usage)
     const user_id = message.author.id;
     const guild_id = message.guild.id;
     const username = message.author.username;
-    const current_time = new Date();
 
     const user = await db_manager.getUser(user_id, guild_id);
 
@@ -72,64 +71,69 @@ export async function handleGamba(args, message, usage)
             }, message_dispatcher.PRIORITY.HIGH);
 
         game_manager.startGame(user.user_id, user.guild_id, game);
-        const result = await game.play(user, message, bet_amount);
-
-        // build result modification array to show final result message
-        let result_array = [];
-        const final_result = await applyItemEffects(user, message, bet_amount, result, game, result_array);
-
-        // timeout for dramatic effect
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // send result message
-        if(final_result.result != "timeout")
+        try
         {
-            await message_dispatcher.edit(final_result.message, {
-                flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.appendGameResult(
-                    final_result.message,
-                    game.name,
-                    bet_amount,
-                    final_result.result,
-                    final_result.base_payout,
-                    final_result.payout,
-                    result_array
-                )]
-            });
+            const result = await game.play(user, message, bet_amount);
+
+            // build result modification array to show final result message
+            let result_array = [];
+            const final_result = await applyItemEffects(user, message, bet_amount, result, game, result_array);
+
+            // timeout for dramatic effect
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // send result message
+            if(final_result.result === "error")
+            {
+                // error already displayed by handleInteractionError, skip everything
+            }
+            else if(final_result.result != "timeout")
+            {
+                await message_dispatcher.edit(final_result.message, {
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [MessageTemplates.appendGameResult(
+                        final_result.message,
+                        game.name,
+                        bet_amount,
+                        final_result.result,
+                        final_result.base_payout,
+                        final_result.payout,
+                        result_array
+                    )]
+                });
+            }
+            else
+            {
+                await message_dispatcher.edit(final_result.message, {
+                    flags: MessageFlags.IsComponentsV2,
+                    components:  [MessageTemplates.errorMessage(
+                        `Your game timed out. Bet returned.`
+                    )]
+                }, message_dispatcher.PRIORITY.HIGH);
+            }
+
+            const xp = xp_manager.calculateXP(user, bet_amount, final_result);
+
+            // wait for final result from item effects to update stats and balance
+            await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);
+            await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
+
+            const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
+            // send user message instead of reply to message
+            if(lvl_up)
+            {
+                const rewards = xp_manager.getLevelRewards(user.progression.level);
+                message_dispatcher.send(message.channel, {
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [MessageTemplates.levelUpMessage(user, username, rewards)]
+                });
+                await xp_manager.applyLevelRewards(user, user.progression.level);
+            }
         }
-        else
+        finally
         {
-            await message_dispatcher.edit(final_result.message, {
-                flags: MessageFlags.IsComponentsV2,
-                components:  [MessageTemplates.errorMessage(
-                    `Your game timed out. Bet returned.`
-                )]
-            }, message_dispatcher.PRIORITY.HIGH);
+            game_manager.endGame(user.user_id, user.guild_id);
         }
-        
-        game_manager.endGame(user.user_id, user.guild_id);
-
-        const xp = xp_manager.calculateXP(user, bet_amount, final_result);
-
-        // wait for final result from item effects to update stats and balance
-        await db_manager.updateUserBalance(user_id, guild_id, final_result.payout);
-        await game.updateStats(user_id, guild_id, bet_amount, final_result.result, final_result.payout);
-
-        const lvl_up = await db_manager.updateUserLevel(user_id, guild_id, xp);
-        // send user message instead of reply to message
-        if(lvl_up)
-        {
-            const rewards = xp_manager.getLevelRewards(user.progression.level);
-            message_dispatcher.send(message.channel, {
-                flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.levelUpMessage(user, username, rewards)]
-            });
-            await xp_manager.applyLevelRewards(user, user.progression.level);
-            return;
-        }
-
-        // if(user.user_id == '320903160040390657' && user.guild_id == '1357364607924310166')
-        //     xp_manager.applyLevelRewards(user, 100);
     }
     else
     {
@@ -153,8 +157,12 @@ async function sendItemMessage(user, item_key, message)
 
 async function applyItemEffects(user, message, bet_amount, result, game, result_array)
 {
-    // placeholder for item effects application
     let modified_result = result;
+
+    // don't consume items on interaction errors — not the player's fault
+    if(result.result === 'error')
+        return modified_result;
+
     const active_items = await item_manager.getActiveItemsForUser(user.user_id, user.guild_id);
 
     // first check for second chance token
@@ -171,10 +179,10 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
             modified_result = second_chance_result;
             if(modified_result.result === 'win')
             {
-                
-                modified_result.payout = Math.floor(modified_result.payout * 0.5);
-                result_array.push({label: 'Second Chance', calc: '- ' + MessageTemplates.formatNumber(modified_result.payout)});
-        }
+                const before = modified_result.payout;
+                modified_result.payout = Math.floor(before * 0.5);
+                result_array.push({label: 'Second Chance (x0.5)', calc: '- ' + MessageTemplates.formatNumber(before - modified_result.payout)});
+            }
         }
     }
 
@@ -182,8 +190,9 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
     {
         if(modified_result.result === 'loss')
         {
-            modified_result.payout = Math.floor(modified_result.payout * 0.5);
-            result_array.push({label: 'Loss Cushion', calc: 'x 0.5'})
+            const before = modified_result.payout;
+            modified_result.payout = Math.floor(before * 0.5);
+            result_array.push({label: 'Loss Cushion (x0.5)', calc: '+ ' + MessageTemplates.formatNumber(Math.abs(before - modified_result.payout))});
         }
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'lc', 1);
@@ -194,8 +203,9 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
     {
         if(modified_result.result === 'win')
         {
-            result_array.push({label: 'Jackpot Juice', calc: '+ ' + MessageTemplates.formatNumber(modified_result.payout)});
-            modified_result.payout = modified_result.payout * 2;
+            const before = modified_result.payout;
+            modified_result.payout = before * 2;
+            result_array.push({label: 'Jackpot Juice (x2)', calc: '+ ' + MessageTemplates.formatNumber(modified_result.payout - before)});
         }
         // consume item
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'jj', 1);
@@ -206,8 +216,9 @@ async function applyItemEffects(user, message, bet_amount, result, game, result_
         // if win add 10% to payout
         if(modified_result.result === 'win')
         {
-            modified_result.payout = Math.floor(modified_result.payout * 1.1);
-            result_array.push({label: `Carrot Surge (${active_items['cs']-1})`, calc: '+ 10%'})
+            const before = modified_result.payout;
+            modified_result.payout = Math.floor(before * 1.1);
+            result_array.push({label: `Carrot Surge (+10%)`, calc: '+ ' + MessageTemplates.formatNumber(modified_result.payout - before)});
         }
         // consume regardless of win/loss
         await item_manager.consumeActiveItemForUser(user.user_id, user.guild_id, 'cs', 1);

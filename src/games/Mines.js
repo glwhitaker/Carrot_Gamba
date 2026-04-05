@@ -34,8 +34,12 @@ export class Mines extends Game
         {
             select_collector.on('collect', async (interaction) =>
             {
-                // confirm interaction
-                await interaction.deferUpdate();
+                if(!await this.safeDeferUpdate(interaction))
+                {
+                    select_collector.stop();
+                    resolve(await this.handleInteractionError(game_message));
+                    return;
+                }
 
                 const selected_mines = parseInt(interaction.values[0]);
                 this.total_safe = this.num_cells - selected_mines;
@@ -83,8 +87,12 @@ export class Mines extends Game
         {
             game_collector.on('collect', async (cell_interaction) =>
             {
-                // confirm interaction
-                await cell_interaction.deferUpdate();
+                if(!await this.safeDeferUpdate(cell_interaction))
+                {
+                    game_collector.stop();
+                    resolve(await this.handleInteractionError(interaction.message));
+                    return;
+                }
 
                 if(cell_interaction.customId === 'mines_cashout')
                 {

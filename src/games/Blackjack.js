@@ -388,8 +388,12 @@ export class Blackjack extends Game
         {
             collector.on('collect', async (interaction) =>
             {
-                console.log("BLACKJACK_INTERACTION\n",interaction);
-                await interaction.deferUpdate();
+                if(!await this.safeDeferUpdate(interaction))
+                {
+                    collector.stop();
+                    resolve(await this.handleInteractionError(game_message));
+                    return;
+                }
 
                 const hit_or_stand = interaction.customId.split('_')[1];
 

@@ -52,8 +52,12 @@ export class NumberGuess extends Game
         {
             collector.on('collect', async (interaction) =>
             {
-                // confirm interaction
-                await interaction.deferUpdate();
+                if(!await this.safeDeferUpdate(interaction))
+                {
+                    collector.stop();
+                    resolve(await this.handleInteractionError(game_message));
+                    return;
+                }
                 const guessed_number = parseInt(interaction.customId.split('_')[1]);
                 const win = (guessed_number === winning_number);
                 const base_payout = bet_amount * this.multiplier;
