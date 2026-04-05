@@ -794,9 +794,7 @@ class DBManager
         const win_rates = new Array(56);
         for(let i = 0; i < 56; i++)
         {
-            if(buckets[i].total > 0)
-                last_rate = buckets[i].wins / buckets[i].total;
-            win_rates[i] = last_rate;
+            win_rates[i] = buckets[i].total > 0 ? buckets[i].wins / buckets[i].total : 0;
         }
 
         return win_rates;
