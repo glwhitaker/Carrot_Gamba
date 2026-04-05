@@ -773,14 +773,14 @@ class DBManager
             `, [user_id, guild_id, start_iso])
         ]);
 
-        // bucket into 56 3-hour chunks
+        // bucket into 42 4-hour chunks
         const buckets = new Array(42).fill(null).map(() => ({ wins: 0, total: 0 }));
 
         for(const game of games)
         {
             const game_time = new Date(game.timestamp + 'Z').getTime();
             const bucket_index = Math.min(41, Math.floor((game_time - start) / (4 * 60 * 60 * 1000)));
-            if(bucket_index >= 0 && bucket_index < 56)
+            if(bucket_index >= 0 && bucket_index < 42)
             {
                 buckets[bucket_index].total++;
                 if(game.result === 'win')
@@ -788,13 +788,42 @@ class DBManager
             }
         }
 
-        // seed carry-forward with pre-window win rate
-        let last_rate = prior.total > 0 ? prior.wins / prior.total : 0;
+        // build anchor points: buckets with actual data
+        const seed_rate = prior.total > 0 ? prior.wins / prior.total : 0;
+        const anchors = [];
 
-        const win_rates = new Array(42);
+        // virtual anchor at index -1 for the pre-window rate
+        anchors.push({ index: -1, rate: seed_rate });
+
         for(let i = 0; i < 42; i++)
         {
-            win_rates[i] = buckets[i].total > 0 ? buckets[i].wins / buckets[i].total : 0;
+            if(buckets[i].total > 0)
+                anchors.push({ index: i, rate: buckets[i].wins / buckets[i].total });
+        }
+
+        // lerp between anchors to fill empty buckets
+        const win_rates = new Array(42);
+        for(let a = 0; a < anchors.length; a++)
+        {
+            const from = anchors[a];
+            const to = a + 1 < anchors.length ? anchors[a + 1] : null;
+
+            // fill from this anchor to the next (or end)
+            const start_i = Math.max(0, from.index);
+            const end_i = to ? to.index : 41;
+
+            for(let i = start_i; i <= end_i; i++)
+            {
+                if(i === from.index)
+                    win_rates[i] = from.rate;
+                else if(to)
+                {
+                    const t = (i - from.index) / (to.index - from.index);
+                    win_rates[i] = from.rate + t * (to.rate - from.rate);
+                }
+                else
+                    win_rates[i] = from.rate;
+            }
         }
 
         return win_rates;
