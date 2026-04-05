@@ -754,13 +754,24 @@ class DBManager
         const start = now - (168 * 60 * 60 * 1000);
         const start_iso = new Date(start).toISOString();
 
-        const games = await this.db.all(`
-            SELECT result, timestamp
-            FROM game_history
-            WHERE user_id = ? AND guild_id = ?
-            AND timestamp >= ?
-            ORDER BY timestamp ASC
-        `, [user_id, guild_id, start_iso]);
+        // fetch pre-window win rate and in-window games in parallel
+        const [prior, games] = await Promise.all([
+            this.db.get(`
+                SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) as wins
+                FROM game_history
+                WHERE user_id = ? AND guild_id = ?
+                AND timestamp < ?
+            `, [user_id, guild_id, start_iso]),
+            this.db.all(`
+                SELECT result, timestamp
+                FROM game_history
+                WHERE user_id = ? AND guild_id = ?
+                AND timestamp >= ?
+                ORDER BY timestamp ASC
+            `, [user_id, guild_id, start_iso])
+        ]);
 
         // bucket into 56 3-hour chunks
         const buckets = new Array(56).fill(null).map(() => ({ wins: 0, total: 0 }));
@@ -777,9 +788,10 @@ class DBManager
             }
         }
 
-        // calculate win rates with carry-forward for empty buckets
+        // seed carry-forward with pre-window win rate
+        let last_rate = prior.total > 0 ? prior.wins / prior.total : 0;
+
         const win_rates = new Array(56);
-        let last_rate = 0;
         for(let i = 0; i < 56; i++)
         {
             if(buckets[i].total > 0)

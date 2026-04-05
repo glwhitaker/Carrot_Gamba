@@ -55,7 +55,9 @@ The renderer is statistic-agnostic. Any future trendline just needs to provide a
 
 ### Win Rate (`db_manager.getWinRateTrend`)
 
-**Query**: All rows from `game_history` for the user in the last 168 hours, ordered by timestamp.
+**Queries** (run in parallel):
+1. Aggregate win rate from all games *before* the 168-hour window (seed value)
+2. All rows from `game_history` within the window, ordered by timestamp
 
 **Bucketing**: Each game's timestamp is mapped to a bucket index via:
 ```
@@ -64,7 +66,7 @@ bucket = floor((game_time - window_start) / 3 hours)
 
 **Win rate per bucket**: `wins / total` games in that bucket.
 
-**Empty bucket handling**: Carry-forward — if a bucket has zero games, it inherits the previous bucket's win rate. The first bucket defaults to 0 if empty.
+**Empty bucket handling**: Carry-forward — if a bucket has zero games, it inherits the previous bucket's win rate. The carry-forward is seeded with the user's pre-window aggregate win rate, so the trendline starts at their historical baseline rather than 0. Only users with zero lifetime games will see an empty chart.
 
 **Returns**: `Number[56]` — values in [0.0, 1.0], ready for `trendline()`.
 
