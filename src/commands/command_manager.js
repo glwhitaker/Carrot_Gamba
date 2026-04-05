@@ -11,6 +11,8 @@ import { handleHelp } from './help.js';
 import { handleLeaderboard } from './leaderboard.js';
 import { handleInventory } from './inventory.js';
 import { handleOpen } from './open.js';
+import { handleGive } from './give.js';
+import config from '../config.js';
 
 // commandManager singleton to manage commands
 class CommandManager
@@ -119,6 +121,20 @@ class CommandManager
                 }
             }
         };
+
+        if(config.COMMAND_PREFIX !== '^')
+        {
+            this.commands.dev =
+            {
+                give:
+                {
+                    execute: handleGive,
+                    description: 'Give yourself items or crates (dev only)',
+                    usage: `${config.COMMAND_PREFIX}give <item_key|crate_key> [quantity]`,
+                    aliases: []
+                }
+            };
+        }
     }
 
     getAllCommands()
