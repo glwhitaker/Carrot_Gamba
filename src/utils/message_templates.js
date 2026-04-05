@@ -178,7 +178,7 @@ export class MessageTemplates
         const current_xp = user.progression.xp;
         const required_xp = xp_manager.requiredXPForLevel(level);
 
-        const bar_length = 27;
+        const bar_length = 30;
         const filled_length = Math.floor((current_xp / required_xp) * bar_length);
         const empty_length = bar_length - filled_length;
         const filled_bar = '▰'.repeat(filled_length > 0 ? filled_length : 0);
@@ -725,13 +725,50 @@ export class MessageTemplates
         return this._finalize(container);
     }
 
+    // ── Trendline ────────────────────────────────────────────────────
+
+    static trendline(data)
+    {
+        const rows = 4;
+        const cols = data.length;
+        const blocks = ' ▁▂▃▄▅▆▇█';
+        const band = 1 / rows;
+
+        const lines = [];
+        for(let row = rows - 1; row >= 0; row--)
+        {
+            let line = '';
+            const row_min = row * band;
+            const row_max = (row + 1) * band;
+
+            for(let col = 0; col < cols; col++)
+            {
+                const value = data[col];
+
+                if(value >= row_max)
+                    line += '█';
+                else if(value > row_min)
+                {
+                    const fraction = (value - row_min) / band;
+                    const level = Math.max(1, Math.min(8, Math.ceil(fraction * 8)));
+                    line += blocks[level];
+                }
+                else
+                    line += ' ';
+            }
+            lines.push(line);
+        }
+
+        return lines.join('\n');
+    }
+
     // ── Stats Messages ───────────────────────────────────────────────
 
-    static userStatsMessage(user, stats)
+    static userStatsMessage(user, stats, win_rate_trend)
     {
         const xp_bar = this.userExperienceBar(user);
 
-        const total = 52;
+        const total = 56;
         const stat_value_width = Math.max(
             this.formatNumber(stats.highest_balance).length + 3,
             this.formatNumber(stats.total_money_won).length + 3,
@@ -764,6 +801,10 @@ export class MessageTemplates
             rowTemplate('\u001b[1mWin Rate:\u001b[0m', ((stats.total_games_won / Math.max(stats.total_games_played, 1)) * 100).toFixed(2) + '%')
         ].join('\n')}\`\`\``;
 
+        const trend_field = win_rate_trend
+            ? `\`\`\`ansi\n\u001b[1mWin Rate - Last 7 Days:\u001b[0m\n${this.trendline(win_rate_trend)}\n\`\`\``
+            : null;
+
         const container = new ContainerBuilder()
             .setAccentColor(COLORS.INFO)
             .addTextDisplayComponents(this._text(`# Gamba Statistics\n>>> Statistics for <@${user.user_id}>`))
@@ -773,6 +814,15 @@ export class MessageTemplates
                 this._text(stats_field),
                 this._text(games_field)
             );
+
+        if(trend_field)
+        {
+            container.addSeparatorComponents(this._spacer());
+            container.addTextDisplayComponents(
+                this._text(trend_field)
+            );
+        }
+
         return this._finalize(container);
     }
 
@@ -780,38 +830,51 @@ export class MessageTemplates
     {
         const v_game_name = game_name.charAt(0).toUpperCase() + game_name.slice(1);
 
-        const total = 52;
-        const stat_value_width = Math.max(
-            this.formatNumber(user_stats.total_games_played).length + 3,
-            this.formatNumber(user_stats.total_games_won).length + 3,
-            this.formatNumber(user_stats.total_games_lost).length + 3,
-            this.formatNumber(user_stats.total_money_wagered).length + 3,
-            this.formatNumber(user_stats.total_money_won).length + 3,
-            this.formatNumber(user_stats.total_money_lost).length + 3,
-            this.formatNumber(global_stats.total_games_played).length + 3,
-            this.formatNumber(global_stats.total_games_won).length + 3,
-            this.formatNumber(global_stats.total_games_lost).length + 3,
-            this.formatNumber(global_stats.total_money_wagered).length + 3,
-            this.formatNumber(global_stats.total_money_won).length + 3,
-            this.formatNumber(global_stats.total_money_lost).length + 3
-        );
-        const stat_name_width = total - stat_value_width;
-        const rowTemplate = (name, value) => `${name.padEnd(stat_name_width)}${value.padStart(stat_value_width)}`;
+        const winRate = (stats) => stats.total_games_played > 0
+            ? ((stats.total_games_won / stats.total_games_played) * 100).toFixed(1) + '%'
+            : '0.0%';
+        const roi = (stats) => stats.total_money_wagered > 0
+            ? ((stats.net_profit / stats.total_money_wagered) * 100).toFixed(1) + '%'
+            : '0.0%';
 
-        const buildStatsBlock = (stats) => [
-            rowTemplate('\u001b[1mGames Played:\u001b[0m', this.formatNumber(stats.total_games_played)),
-            rowTemplate('\u001b[1mWins:\u001b[0m', this.formatNumber(stats.total_games_won)),
-            rowTemplate('\u001b[1mLosses:\u001b[0m', this.formatNumber(stats.total_games_lost)),
-            rowTemplate('\u001b[1mCarrots Wagered:\u001b[0m', this.formatNumber(stats.total_money_wagered) + ' 🥕'),
-            rowTemplate('\u001b[1mCarrots Won:\u001b[0m', this.formatNumber(stats.total_money_won) + ' 🥕'),
-            rowTemplate('\u001b[1mCarrots Lost:\u001b[0m', this.formatNumber(stats.total_money_lost) + ' 🥕')
+        // comparison table: label | you | global
+        const label_width = 15;
+        const value_width = 15;
+        const rowTemplate = (label, you, global) =>
+            `${this.padEndAnsi(label, label_width)}${this.padStartAnsi(you, value_width)}${this.padStartAnsi(global, value_width)}`;
+
+        const separator = '─'.repeat(label_width + value_width * 2);
+        const header = rowTemplate('STATS', 'YOU', 'GLOBAL');
+
+        const comparison = [
+            header,
+            separator,
+            rowTemplate('\u001b[1mWin Rate:\u001b[0m', winRate(user_stats), winRate(global_stats)),
+            rowTemplate('\u001b[1mROI:\u001b[0m', roi(user_stats), roi(global_stats)),
+            rowTemplate('\u001b[1mAvg Bet:\u001b[0m', this.formatNumber(Math.floor(user_stats.avg_bet)), this.formatNumber(Math.floor(global_stats.avg_bet))),
+            rowTemplate('\u001b[1mGames Played:\u001b[0m', this.formatNumber(user_stats.total_games_played), this.formatNumber(global_stats.total_games_played)),
+        ].join('\n');
+
+        // personal highlights
+        const hl_label_width = 22;
+        const hl_value_width = label_width + value_width * 2 - hl_label_width;
+        const hlRow = (label, value) =>
+            `${this.padEndAnsi(label, hl_label_width)}${this.padStartAnsi(value, hl_value_width)}`;
+
+        const netPrefix = user_stats.net_profit >= 0 ? '' : '-';
+        const highlights = [
+            hlRow('\u001b[1mNet Profit:\u001b[0m', `${netPrefix}${this.formatNumber(Math.abs(user_stats.net_profit))} 🥕`),
+            hlRow('\u001b[1mBiggest Win:\u001b[0m', `${this.formatNumber(user_stats.biggest_win)} 🥕`),
+            hlRow('\u001b[1mBiggest Loss:\u001b[0m', `-${this.formatNumber(Math.abs(user_stats.biggest_loss))} 🥕`),
+            hlRow('\u001b[1mBest Win Streak:\u001b[0m', this.formatNumber(user_stats.best_win_streak)),
         ].join('\n');
 
         const container = new ContainerBuilder()
             .setAccentColor(COLORS.INFO)
             .addTextDisplayComponents(this._text(`# ${v_game_name} Statistics\n>>> Statistics for <@${user.user_id}>`))
-            .addTextDisplayComponents(this._text(`## Your Stats\n\`\`\`ansi\n${buildStatsBlock(user_stats)}\n\`\`\``))
-            .addTextDisplayComponents(this._text(`## Global Stats\n\`\`\`ansi\n${buildStatsBlock(global_stats)}\n\`\`\``));
+            .addTextDisplayComponents(this._text(`\`\`\`ansi\n${comparison}\n\`\`\``))
+            .addSeparatorComponents(this._spacer())
+            .addTextDisplayComponents(this._text(`\`\`\`ansi\n${highlights}\n\`\`\``));
         return this._finalize(container);
     }
 
@@ -850,6 +913,18 @@ export class MessageTemplates
         if(info[selection])
         {
             container.addTextDisplayComponents(this._text(`## Info\n>>> ${info[selection].how_it_works}\n\n${info[selection].example}`));
+        }
+
+        if(selection === 'items')
+        {
+            let item_list = '## Item Guide\n';
+            const items = item_manager.getItems();
+            for(const key in items)
+            {
+                const item = items[key];
+                item_list += `\n**${item.name}**  ${item.icon}\n> *${item.desc}*\n`;
+            }
+            container.addTextDisplayComponents(this._text(item_list));
         }
 
         container.addTextDisplayComponents(this._text(command_list));

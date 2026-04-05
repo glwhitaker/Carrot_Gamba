@@ -18,10 +18,13 @@ export async function handleStats(args, message, usage)
         if(args.length === 0 || (args.length === 1 && args[0].toLowerCase() === 'me'))
         {
             // show stats for self
-            const stats = await db_manager.getUserStats(user_id, guild_id);
+            const [stats, win_rate_trend] = await Promise.all([
+                db_manager.getUserStats(user_id, guild_id),
+                db_manager.getWinRateTrend(user_id, guild_id)
+            ]);
             return message_dispatcher.reply(message, {
                 flags: MessageFlags.IsComponentsV2,
-                components: [MessageTemplates.userStatsMessage(user, stats)]
+                components: [MessageTemplates.userStatsMessage(user, stats, win_rate_trend)]
             });
         }
         // show stats for another user
@@ -32,10 +35,13 @@ export async function handleStats(args, message, usage)
 
             if(mentioned_user)
             {
-                const stats = await db_manager.getUserStats(mentioned_user_id, guild_id);
+                const [stats, win_rate_trend] = await Promise.all([
+                    db_manager.getUserStats(mentioned_user_id, guild_id),
+                    db_manager.getWinRateTrend(mentioned_user_id, guild_id)
+                ]);
                 return message_dispatcher.reply(message, {
                     flags: MessageFlags.IsComponentsV2,
-                    components: [MessageTemplates.userStatsMessage(mentioned_user, stats)]
+                    components: [MessageTemplates.userStatsMessage(mentioned_user, stats, win_rate_trend)]
                 });
             }
             else

@@ -705,43 +705,106 @@ class DBManager
 
     async getUserGameStats(user_id, guild_id, game_name)
     {
-        // get comprehensive stats for a user for a specific game
-        // derive these from game_history
-        // get total games played, won, lost, total money wagered, won, lost for the game
         const stats = await this.db.get(`
-            SELECT 
-                (SELECT COUNT(*) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ?) as total_games_played,
-                (SELECT COUNT(*) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND result = 'win') as total_games_won,
-                (SELECT COUNT(*) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND result = 'loss') as total_games_lost,
-                (SELECT SUM(bet_amount) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ?) as total_money_wagered,
-                (SELECT SUM(payout) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND payout > 0) as total_money_won,
-                (SELECT ABS(SUM(payout)) FROM game_history WHERE user_id = ? AND guild_id = ? AND game_name = ? AND payout < 0) as total_money_lost
-            `,
-            [
-                user_id, guild_id, game_name,
-                user_id, guild_id, game_name,
-                user_id, guild_id, game_name,
-                user_id, guild_id, game_name,
-                user_id, guild_id, game_name,
-                user_id, guild_id, game_name
-            ]
-        );
+            SELECT
+                COUNT(*) as total_games_played,
+                SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) as total_games_won,
+                SUM(CASE WHEN result = 'loss' THEN 1 ELSE 0 END) as total_games_lost,
+                COALESCE(SUM(bet_amount), 0) as total_money_wagered,
+                COALESCE(SUM(CASE WHEN payout > 0 THEN payout ELSE 0 END), 0) as total_money_won,
+                COALESCE(ABS(SUM(CASE WHEN payout < 0 THEN payout ELSE 0 END)), 0) as total_money_lost,
+                COALESCE(MAX(CASE WHEN payout > 0 THEN payout END), 0) as biggest_win,
+                COALESCE(MIN(CASE WHEN payout < 0 THEN payout END), 0) as biggest_loss,
+                COALESCE(AVG(bet_amount), 0) as avg_bet,
+                COALESCE(SUM(payout), 0) as net_profit
+            FROM game_history
+            WHERE user_id = ? AND guild_id = ? AND game_name = ?
+        `, [user_id, guild_id, game_name]);
+
+        // calculate best win streak from ordered history
+        const games = await this.db.all(`
+            SELECT result FROM game_history
+            WHERE user_id = ? AND guild_id = ? AND game_name = ?
+            ORDER BY timestamp ASC
+        `, [user_id, guild_id, game_name]);
+
+        let best_streak = 0;
+        let current_streak = 0;
+        for(const game of games)
+        {
+            if(game.result === 'win')
+            {
+                current_streak++;
+                if(current_streak > best_streak)
+                    best_streak = current_streak;
+            }
+            else
+            {
+                current_streak = 0;
+            }
+        }
+        stats.best_win_streak = best_streak;
 
         return stats;
     }
 
+    async getWinRateTrend(user_id, guild_id)
+    {
+        const now = Date.now();
+        const start = now - (168 * 60 * 60 * 1000);
+        const start_iso = new Date(start).toISOString();
+
+        const games = await this.db.all(`
+            SELECT result, timestamp
+            FROM game_history
+            WHERE user_id = ? AND guild_id = ?
+            AND timestamp >= ?
+            ORDER BY timestamp ASC
+        `, [user_id, guild_id, start_iso]);
+
+        // bucket into 56 3-hour chunks
+        const buckets = new Array(56).fill(null).map(() => ({ wins: 0, total: 0 }));
+
+        for(const game of games)
+        {
+            const game_time = new Date(game.timestamp + 'Z').getTime();
+            const bucket_index = Math.min(55, Math.floor((game_time - start) / (3 * 60 * 60 * 1000)));
+            if(bucket_index >= 0 && bucket_index < 56)
+            {
+                buckets[bucket_index].total++;
+                if(game.result === 'win')
+                    buckets[bucket_index].wins++;
+            }
+        }
+
+        // calculate win rates with carry-forward for empty buckets
+        const win_rates = new Array(56);
+        let last_rate = 0;
+        for(let i = 0; i < 56; i++)
+        {
+            if(buckets[i].total > 0)
+                last_rate = buckets[i].wins / buckets[i].total;
+            win_rates[i] = last_rate;
+        }
+
+        return win_rates;
+    }
+
     async getGlobalGameStats(guild_id, game_name)
     {
-        // get global stats for a specific game
-        // can be found in game_stats table
         const stats = await this.db.get(`
-            SELECT *
-            FROM game_stats
-            WHERE game_name = ?`,
-            [
-                game_name
-            ]
-        );
+            SELECT
+                COUNT(*) as total_games_played,
+                SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) as total_games_won,
+                SUM(CASE WHEN result = 'loss' THEN 1 ELSE 0 END) as total_games_lost,
+                COALESCE(SUM(bet_amount), 0) as total_money_wagered,
+                COALESCE(SUM(CASE WHEN payout > 0 THEN payout ELSE 0 END), 0) as total_money_won,
+                COALESCE(ABS(SUM(CASE WHEN payout < 0 THEN payout ELSE 0 END)), 0) as total_money_lost,
+                COALESCE(AVG(bet_amount), 0) as avg_bet,
+                COALESCE(SUM(payout), 0) as net_profit
+            FROM game_history
+            WHERE guild_id = ? AND game_name = ?
+        `, [guild_id, game_name]);
 
         return stats;
     }
