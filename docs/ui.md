@@ -108,7 +108,7 @@ static getStandardFooter() {
 | `successMessage(title, message)` | Generic success |
 | `helpMessage(selection, info)` | Help with category dropdown |
 | `leaderboardMessage(boards, selection)` | Leaderboard with type dropdown |
-| `userStatsMessage(user, stats)` | `^stats me` response |
+| `userStatsMessage(user, stats, win_rate_trend)` | `^stats me` response (includes trendline) |
 | `userGameStatsMessage(user, game, userStats, globalStats)` | `^stats games <game>` response |
 
 ## ANSI Formatting
@@ -134,6 +134,7 @@ static colorLevelText(text, level) {
 - `visibleLength(str)` - String length excluding ANSI codes
 - `getActiveItemsHeader(items)` - Item icon header row
 - `userExperienceBar(user)` - XP progress bar
+- `trendline(data)` - Block-character area chart from normalized array (see `docs/trendline.md`)
 
 ## Image Assets (`src/img/`)
 

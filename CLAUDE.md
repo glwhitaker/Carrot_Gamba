@@ -10,6 +10,7 @@ Detailed system documentation is available in `/docs`:
 - `docs/leveling.md` - XP calculation, level progression, rewards
 - `docs/items.md` - Items, crates, activation, consumption
 - `docs/games.md` - Game system architecture, adding new games
+- `docs/trendline.md` - Block-character area charts, adding new trendlines
 - `docs/ui.md` - Message templates, Discord embeds
 
 ## Project Overview
