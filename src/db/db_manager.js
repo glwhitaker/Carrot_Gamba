@@ -774,12 +774,12 @@ class DBManager
         ]);
 
         // bucket into 56 3-hour chunks
-        const buckets = new Array(56).fill(null).map(() => ({ wins: 0, total: 0 }));
+        const buckets = new Array(42).fill(null).map(() => ({ wins: 0, total: 0 }));
 
         for(const game of games)
         {
             const game_time = new Date(game.timestamp + 'Z').getTime();
-            const bucket_index = Math.min(55, Math.floor((game_time - start) / (3 * 60 * 60 * 1000)));
+            const bucket_index = Math.min(41, Math.floor((game_time - start) / (4 * 60 * 60 * 1000)));
             if(bucket_index >= 0 && bucket_index < 56)
             {
                 buckets[bucket_index].total++;
@@ -791,8 +791,8 @@ class DBManager
         // seed carry-forward with pre-window win rate
         let last_rate = prior.total > 0 ? prior.wins / prior.total : 0;
 
-        const win_rates = new Array(56);
-        for(let i = 0; i < 56; i++)
+        const win_rates = new Array(42);
+        for(let i = 0; i < 42; i++)
         {
             win_rates[i] = buckets[i].total > 0 ? buckets[i].wins / buckets[i].total : 0;
         }
