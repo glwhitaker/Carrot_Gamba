@@ -6,11 +6,8 @@ export async function handleHelp(args, message, usage)
 {
     const info = {
         items: {
-            how_it_works: 'Items can be used to gain temporary advantages in games, enhance your earnings, ' +
-            'or protect yourself from losses. Activating an item will consume it from your inventory ' +
-            'and will be added to your active items list. Active items provide their benefits automatically if applicable.',
-            example: 'For example, say you activate a **Second Chance Token**. If you lose your next game, the ' +
-            'token will be triggered automatically, providing you with a second chance to win without losing your bet.'
+            how_it_works: 'Use `^use <code>` to activate an item. Active items trigger automatically when applicable.',
+            example: 'For example, activating a **Second Chance Token** gives you a retry if you lose your next game.'
         }
     }
 

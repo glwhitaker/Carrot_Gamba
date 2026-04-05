@@ -39,8 +39,12 @@ async function initialize()
     }
 }
 
+let shutting_down = false;
 async function shutdown()
 {
+    if(shutting_down) return;
+    shutting_down = true;
+
     console.log('\n[System] Shutting down...');
 
     try
