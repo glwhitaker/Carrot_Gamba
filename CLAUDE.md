@@ -12,6 +12,7 @@ Detailed system documentation is available in `/docs`:
 - `docs/games.md` - Game system architecture, adding new games
 - `docs/trendline.md` - Block-character area charts, adding new trendlines
 - `docs/ui.md` - Message templates, Discord embeds
+- `docs/ui-examples.md` - Message construction guide, worked examples, common mistakes
 
 ## Project Overview
 
