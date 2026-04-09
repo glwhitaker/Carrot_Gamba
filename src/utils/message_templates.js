@@ -402,7 +402,7 @@ export class MessageTemplates
             .addTextDisplayComponents(this._text(`# Coin Toss`))
             .addTextDisplayComponents(this._betText(user, amount))
             .addSeparatorComponents(this._spacer())
-            .addTextDisplayComponents(this._text(`# ═══════    ${frame ? frame : '🪙'}    ═══════`));
+            .addTextDisplayComponents(this._text(`# ════════    ${frame ? frame : '🪙'}    ════════`));
         return this._finalize(container);
     }
 
@@ -413,7 +413,7 @@ export class MessageTemplates
             .addTextDisplayComponents(this._text(`# ${won ? 'You Win!' : 'You Lose!'}`))
             .addTextDisplayComponents(this._betText(user, bet_amount))
             .addSeparatorComponents(this._spacer())
-            .addTextDisplayComponents(this._text(`#  ═══════    🪙    ═══════`));
+            .addTextDisplayComponents(this._text(`#  ════════    🪙    ════════`));
         return this._finalize(container);
     }
 
@@ -688,7 +688,7 @@ export class MessageTemplates
         let cont_obj = new ContainerBuilder(container.toJSON());
 
         const won = result === 'win';
-        const left_pad = 18;
+        const left_pad = 20;
         const right_pad = 18;
         const rowTemplate = (name, value) => `${name.padEnd(left_pad)}${value.padStart(right_pad)}`;
 
