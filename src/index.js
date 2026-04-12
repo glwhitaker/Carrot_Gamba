@@ -78,7 +78,7 @@ client.once('clientReady', () =>
         status: 'active',
         activities: [
             {
-                name: "gamba gamba gamba"
+                name: "gamba gamba gamba | ^help"
             }
         ]
     });
