@@ -141,6 +141,18 @@ export class NewGame extends Game {
 }
 ```
 
+For card games, import from the shared deck module instead of defining cards inline:
+```javascript
+import { CARDS, Deck } from './Deck.js';
+
+// In play():
+const deck = new Deck();
+deck.shuffle();
+const card = deck.draw(); // { code, value, suit }
+```
+
+`CARDS` is also imported by `message_templates.js` for card display (e.g. `CARDS.back.code` for face-down placeholders).
+
 2. Register in `src/games/game_manager.js`:
 ```javascript
 import { NewGame } from './NewGame.js';

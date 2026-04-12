@@ -2,6 +2,7 @@ import { ContainerBuilder, ButtonBuilder, ActionRowBuilder, TextDisplayBuilder, 
 import { item_manager } from '../items/item_manager.js';
 import { xp_manager } from '../user/xp_manager.js';
 import { command_manager } from '../commands/command_manager.js';
+import { CARDS } from '../games/Deck.js';
 import config from '../config.js';
 
 // colors for different types of messages
@@ -674,6 +675,76 @@ export class MessageTemplates
             .addActionRowComponents(...action_rows)
             .addSeparatorComponents(this._spacer())
             .addSectionComponents(section);
+        return this._finalize(container);
+    }
+
+    static rideBusMessage(user, bet_amount, drawn_cards, round, cashout_multiplier, cashout_profit, result)
+    {
+        const game_over = result !== 'playing';
+        const color  = result === 'win' ? COLORS.SUCCESS : result === 'loss' ? COLORS.ERROR : COLORS.GOLD;
+        const header = result === 'win' ? '# You Win!' : result === 'loss' ? '# You Lose!' : '# Ride the Bus';
+
+        let cards_string = '# ';
+        for(const card of drawn_cards)
+            cards_string += `${card.code} `;
+        for(let i = drawn_cards.length; i < 4; i++)
+            cards_string += `${CARDS.back.code} `;
+
+        const cashout_button = new ButtonBuilder()
+            .setCustomId('rtb_cashout')
+            .setLabel('Cash Out')
+            .setStyle(3)
+            .setDisabled(cashout_multiplier <= 1 || game_over);
+
+        const section = new SectionBuilder()
+            .addTextDisplayComponents(
+                this._text(`**Current Multiplier: ${cashout_multiplier.toFixed(2)}x**`),
+                this._text(`\n**Winnings: ${this.formatNumber(cashout_profit)}** 🥕`)
+            )
+            .setButtonAccessory(cashout_button);
+
+        let guess_row;
+        if(round === 1)
+        {
+            guess_row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('rtb_red').setLabel('Red').setStyle(4).setDisabled(game_over),
+                new ButtonBuilder().setCustomId('rtb_black').setLabel('Black').setStyle(2).setDisabled(game_over)
+            );
+        }
+        else if(round === 2)
+        {
+            guess_row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('rtb_higher').setLabel('Higher').setStyle(1).setDisabled(game_over),
+                new ButtonBuilder().setCustomId('rtb_lower').setLabel('Lower').setStyle(4).setDisabled(game_over)
+            );
+        }
+        else if(round === 3)
+        {
+            guess_row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('rtb_inside').setLabel('Inside').setStyle(1).setDisabled(game_over),
+                new ButtonBuilder().setCustomId('rtb_outside').setLabel('Outside').setStyle(4).setDisabled(game_over)
+            );
+        }
+        else
+        {
+            guess_row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('rtb_suit_clubs').setLabel('♣ Clubs').setStyle(2).setDisabled(game_over),
+                new ButtonBuilder().setCustomId('rtb_suit_diamonds').setLabel('♦ Diamonds').setStyle(4).setDisabled(game_over),
+                new ButtonBuilder().setCustomId('rtb_suit_hearts').setLabel('♥ Hearts').setStyle(4).setDisabled(game_over),
+                new ButtonBuilder().setCustomId('rtb_suit_spades').setLabel('♠ Spades').setStyle(2).setDisabled(game_over)
+            );
+        }
+
+        const container = this._gameContainer(color, user)
+            .addTextDisplayComponents(this._text(header))
+            .addTextDisplayComponents(this._betText(user, bet_amount))
+            .addSeparatorComponents(this._spacer())
+            .addTextDisplayComponents(this._text(cards_string))
+            .addSeparatorComponents(this._spacer())
+            .addSectionComponents(section)
+            .addSeparatorComponents(this._spacer())
+            .addActionRowComponents(guess_row);
+
         return this._finalize(container);
     }
 

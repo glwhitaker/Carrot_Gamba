@@ -131,10 +131,11 @@ class DBManager
 
             // Initialize game_stats with existing games
             await this.db.exec(`
-                INSERT OR IGNORE INTO game_stats (game_name) VALUES 
+                INSERT OR IGNORE INTO game_stats (game_name) VALUES
                 ('blackjack'),
                 ('numberguess'),
-                ('cointoss')
+                ('cointoss'),
+                ('ridethebus')
             `);
 
             await this.db.exec('COMMIT');

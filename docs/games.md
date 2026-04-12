@@ -51,6 +51,23 @@ All games return standardized result:
 }
 ```
 
+## Shared Deck (`src/games/Deck.js`)
+
+Card games use a shared deck module rather than defining cards inline.
+
+- **`CARDS`** — exported object of all 52 cards plus a `back` card, each with `{ code, value, suit }`. `code` is the Discord emoji string. Used by templates for card display.
+- **`Deck` class** — per-game instance; call `shuffle()` to build and Fisher-Yates shuffle the 52-card array, then `draw()` to pop cards one at a time.
+
+```javascript
+import { CARDS, Deck } from './Deck.js';
+
+const deck = new Deck();
+deck.shuffle();
+const card = deck.draw(); // { code, value, suit }
+```
+
+`Blackjack` and `RideTheBus` both use this module. Any future card game should do the same.
+
 ## Available Games
 
 ### CoinToss (`src/games/CoinToss.js`)
@@ -68,6 +85,7 @@ All games return standardized result:
 - **Rules**: Standard blackjack, dealer stands on 17
 - **Payout**: 1:1 normal win, 1.5x for natural blackjack
 - **Interaction**: Hit/Stand buttons, 30s timeout
+- **Deck**: uses shared `Deck` class from `Deck.js`
 - **Item Support**:
   - X-Ray Vision (`xrv`): See dealer's hole card
   - Ace.exe (`ace`): First card guaranteed ace
@@ -77,6 +95,24 @@ All games return standardized result:
 - **Mechanics**: Reveal safe tiles, multiplier increases per reveal
 - **Payout**: Cash out at any time for `bet * current_multiplier`
 - **Risk**: Hit a mine = lose bet
+
+### Ride the Bus (`src/games/RideTheBus.js`)
+- **Deck**: shared `Deck` class from `Deck.js`; card ranks A=1, 2–10 face value, J=11, Q=12, K=13
+- **Interaction**: four sequential rounds, each with a 30s timeout
+- **Tie rule**: ties are a loss (rank ties in Higher/Lower; boundary matches in Inside/Outside)
+- **UI**: single message updated in place throughout; buttons disabled on game over (same pattern as Mines)
+- **Flip animation**: 600ms delay between guess and card reveal
+
+| Round | Question | Buttons | Cash-out |
+|-------|----------|---------|---------|
+| 1 | Red or Black? | `[Red]` `[Black]` | Not available |
+| 2 | Higher or Lower? | `[Higher]` `[Lower]` | 2x via section button |
+| 3 | Inside or Outside? | `[Inside]` `[Outside]` | 3x via section button |
+| 4 | Guess the suit! | `[♣]` `[♦]` `[♥]` `[♠]` | 4x via section button |
+
+- **Payouts**: 2x / 3x / 4x cash-out at rounds 2–4; 20x for winning round 4
+- **Loss**: bet lost on wrong guess at any round
+- **Timeout**: bet returned
 
 ## Game Flow (`src/commands/gamba.js`)
 
@@ -117,10 +153,11 @@ Aggregate stats per game type:
 ## Adding a New Game
 
 1. Create `src/games/NewGame.js` extending `Game`
-2. Implement `async play(user, message, bet_amount)` returning result object
-3. Register in `game_manager.registerGames()`
-4. Add message templates in `MessageTemplates`
-5. Initialize in `game_stats` table (see `db_manager.init()`)
+2. If it's a card game, import `Deck` (and `CARDS` if templates need card display) from `./Deck.js`
+3. Implement `async play(user, message, bet_amount)` returning result object
+4. Register in `game_manager.registerGames()`
+5. Add message templates in `MessageTemplates`
+6. Initialize in `game_stats` table (see `db_manager.init()`)
 
 ## Timeouts
 All interactive games use Discord's component collector with 30s timeout. On timeout:
